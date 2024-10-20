@@ -2,20 +2,21 @@ from datetime import datetime
 from typing import AsyncGenerator
 
 from fastapi import Depends
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+from fastapi_users.db import SQLAlchemyUserDatabase
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy import Integer, DateTime, Column, ForeignKey, String, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, DeclarativeMeta
 
-from config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
-from models.models import role
+from config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME, DOCKER_PORT
+from models.delivery import Role
 
-DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@DB:{DOCKER_PORT}/{DB_NAME}"
+# DATABASE_URL = f"postgresql+asyncpg://postgres:postgres@localhost:5434/kurs_db"
 
 
-class Base(DeclarativeBase):
-    pass
+Base: DeclarativeMeta = declarative_base()
 
 
 class User(SQLAlchemyBaseUserTable[int], Base):
@@ -23,8 +24,8 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     email = Column(String(length=320), nullable=False, unique=True)
     username = Column(String, nullable=False)
     hashed_password = Column(String(length=1024), nullable=False)
-    role_id = Column(Integer, ForeignKey(role.c.id), nullable=False)
-    registration_date = Column(DateTime, nullable=False, default=datetime)
+    role_id = Column(Integer, ForeignKey("role.id"), nullable=False)
+    registration_date = Column(DateTime, nullable=False, default=datetime.now)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

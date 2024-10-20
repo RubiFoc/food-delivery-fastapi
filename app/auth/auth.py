@@ -3,7 +3,7 @@ from fastapi_users.authentication import JWTStrategy
 
 from config import SECRET
 
-cookie_transport = CookieTransport(cookie_max_age=3600)
+cookie_transport = CookieTransport(cookie_name="auth", cookie_max_age=3600)
 
 SECRET = SECRET
 

@@ -1,21 +1,23 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi_users import schemas
-from pydantic import EmailStr
+from fastapi_users.schemas import PYDANTIC_V2
+from pydantic import ConfigDict, BaseModel
 
 
 class UserRead(schemas.BaseUser[int]):
     id: int
-    email: EmailStr
+    email: str
     username: str
     role_id: int
     is_active: bool = True
     is_superuser: bool = False
     is_verified: bool = False
 
-    if PYDANTIC_V2:  # pragma: no cover
+    if PYDANTIC_V2:
         model_config = ConfigDict(from_attributes=True)  # type: ignore
-    else:  # pragma: no cover
+    else:
 
         class Config:
             orm_mode = True
@@ -23,9 +25,10 @@ class UserRead(schemas.BaseUser[int]):
 
 class UserCreate(schemas.BaseUserCreate):
     username: str
-    email: EmailStr
+    email: str
     password: str
     role_id: int
+    registration_date: Optional[datetime]
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
@@ -33,3 +36,8 @@ class UserCreate(schemas.BaseUserCreate):
 
 class UserUpdate(schemas.BaseUserUpdate):
     pass
+
+class BaseUser(BaseModel):
+    id: int
+    username: str
+    email: str
