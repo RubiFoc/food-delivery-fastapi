@@ -12,6 +12,7 @@ class RestaurantSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class DishCategorySchema(BaseModel):
@@ -32,10 +33,11 @@ class DishSchema(BaseModel):
     rating: Optional[float] = None
     number_of_marks: int = Field(default=0)
     profit: float
-    time_of_preparing: time
+    time_of_preparing: float
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class OrderDishAssociationSchema(BaseModel):
@@ -62,6 +64,7 @@ class OrderSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class OrderStatusSchema(BaseModel):
@@ -71,3 +74,4 @@ class OrderStatusSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
