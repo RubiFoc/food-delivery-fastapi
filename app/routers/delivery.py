@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from auth.database import get_async_session
 from models.delivery import DishCategory, Dish
-from shcemas.delivery import DishSchema, DishCategorySchema
+from schemas.delivery import DishSchema, DishCategorySchema
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -123,7 +123,7 @@ async def get_all_dishes(session: AsyncSession = Depends(get_async_session)):
 
 @router.post("/dishes", response_model=DishSchema)
 async def add_dish(dish: DishSchema, session: AsyncSession = Depends(get_async_session)):
-    category_query = await session.execute(select(DishCategory).where(DishCategory.id == dish.category))
+    category_query = await session.execute(select(DishCategory).where(DishCategory.id == dish.category_id))
     category = category_query.scalars().first()
 
     if not category:
@@ -133,9 +133,9 @@ async def add_dish(dish: DishSchema, session: AsyncSession = Depends(get_async_s
         name=dish.name,
         price=dish.price,
         weight=dish.weight,
-        category_id=dish.category,
-        rating=None,
-        number_of_marks=None,
+        category_id=dish.category_id,
+        rating=0,
+        number_of_marks=0,
         profit=dish.profit,
         time_of_preparing=dish.time_of_preparing,
         restaurant_id=1
@@ -149,7 +149,7 @@ async def add_dish(dish: DishSchema, session: AsyncSession = Depends(get_async_s
         await session.rollback()
         raise HTTPException(status_code=400, detail="Dish with this ID already exists")
 
-    await session.refresh(new_dish, options=[selectinload(Dish.category_id)])
+    await session.refresh(new_dish)
 
     return new_dish
 
@@ -173,3 +173,43 @@ async def get_dishes_by_category(category_name: str, session: AsyncSession = Dep
     return [DishSchema.from_orm(d) for d in dishes]
 
 
+@router.delete("/dishes")
+async def delete_dish(id: int, session: AsyncSession = Depends(get_async_session)):
+    existing_dish = await session.execute(
+        select(Dish).where(Dish.id == id)
+    )
+    existing_dish = existing_dish.scalars().first()
+
+    if not existing_dish:
+        raise HTTPException(status_code=400, detail="Dish with this id doesn't exist")
+
+    try:
+        await session.delete(existing_dish)
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail="Error deleting dish")
+    return {"Dish category was deleted": DishCategorySchema.from_orm(existing_dish)}
+
+
+@router.patch("/dishes/{dish_id}", response_model=DishSchema)
+async def update_dish(
+    dish_id: int,
+    new_dish: DishSchema,
+    session: AsyncSession = Depends(get_async_session)
+):
+    query = select(Dish).where(Dish.id == dish_id)
+    result = await session.execute(query)
+    dish = result.scalar_one_or_none()
+
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+
+    update_data = new_dish.dict(exclude_unset=True, exclude={"id"})
+    for field, value in update_data.items():
+        setattr(dish, field, value)
+
+    await session.commit()
+    await session.refresh(dish)
+
+    return dish

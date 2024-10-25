@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime, time
 
 
@@ -29,7 +29,7 @@ class DishSchema(BaseModel):
     name: str
     price: float
     weight: float
-    category: int
+    category_id: Union[int, DishCategorySchema]
     rating: Optional[float] = None
     number_of_marks: int = Field(default=0)
     profit: float
@@ -47,6 +47,7 @@ class OrderDishAssociationSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class OrderSchema(BaseModel):
@@ -59,8 +60,9 @@ class OrderSchema(BaseModel):
     time_of_delivery: Optional[datetime] = None
     restaurant_id: int
     location: str
-    courier_id: int
+    courier_id: Optional[int] = None  # Сделано необязательным
     kitchen_worker_id: int
+    customer_id: Optional[int] = None  # Сделано необязательным
 
     class Config:
         orm_mode = True

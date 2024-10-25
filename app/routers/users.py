@@ -1,14 +1,17 @@
-from fastapi import Depends, APIRouter, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import FastAPIUsers
-from fastapi.responses import JSONResponse
+from fastapi_users.schemas import BaseUser
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from starlette import status
+from starlette.responses import JSONResponse
 
 from auth.auth import auth_backend
-from auth.database import get_async_session, User
+from auth.database import get_async_session
 from auth.manager import get_user_manager
-from shcemas.user import BaseUser, UserRead, UserCreate, UserUpdate
-from dependencies import get_current_superuser, get_current_user
+from dependencies import get_current_user, get_current_superuser
+from models.delivery import User, Customer
+from schemas.user import UserRead, UserCreate, UserUpdate
 
 router = APIRouter(prefix="/auth")
 
@@ -58,3 +61,23 @@ async def get_users(user: BaseUser = Depends(get_current_superuser),
     result = await session.execute(select(User))
     users = result.scalars().all()
     return users
+
+
+@router.post('/user/{id}')
+async def add_balance(id: int, amount: float, session: AsyncSession = Depends(get_async_session)):
+    # Проверяем, существует ли пользователь с данным id
+    query = select(Customer).where(Customer.id == id)
+    result = await session.execute(query)
+    customer = result.scalar_one_or_none()
+
+    if customer is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Пополняем баланс
+    customer.balance += amount
+    session.add(customer)
+
+    # Сохраняем изменения в базе данных
+    await session.commit()
+
+    return {"message": "Balance updated successfully", "new_balance": customer.balance}

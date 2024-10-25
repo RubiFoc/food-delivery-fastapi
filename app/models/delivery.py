@@ -16,8 +16,11 @@ class Role(Base):
     name = Column(String(50), nullable=False)
     permissions = Column(JSON)
 
-    # Связь с пользователями
     users = relationship("User", back_populates="role")
+    couriers = relationship("Courier", back_populates="role")
+    customers = relationship("Customer", back_populates="role")
+    kitchen_workers = relationship("KitchenWorker", back_populates="role")
+    admins = relationship("Admin", back_populates="role")
 
 
 class User(Base):
@@ -27,7 +30,7 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     username = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role_id = Column(Integer, ForeignKey('role.id'), nullable=False)
+    role_id = Column(Integer, ForeignKey("role.id"), nullable=False)
     registration_date = Column(DateTime, nullable=False, default=datetime.now)
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
@@ -36,10 +39,11 @@ class User(Base):
     # Связь с ролью
     role = relationship("Role", back_populates="users")
 
-    # Связь с курьером, клиентом и кухонным работником
+    # Связь с курьером, клиентом, кухонным работником и администратором
     courier = relationship("Courier", back_populates="user", uselist=False)
     customer = relationship("Customer", back_populates="user", uselist=False)
     kitchen_worker = relationship("KitchenWorker", back_populates="user", uselist=False)
+    admin = relationship("Admin", back_populates="user", uselist=False)
 
 
 class Courier(Base):
@@ -50,9 +54,12 @@ class Courier(Base):
     number_of_marks = Column(Integer, default=0, nullable=False)
     rate = Column(Float, default=0.1, nullable=False)
     location = Column(String, nullable=False)
+    role_id = Column(Integer, ForeignKey("role.id"), default=2)
 
     # Связь с пользователем
     user = relationship("User", back_populates="courier")
+    # Связь с ролью
+    role = relationship("Role", back_populates="couriers")
 
 
 class Customer(Base):
@@ -60,18 +67,36 @@ class Customer(Base):
 
     id = Column(Integer, ForeignKey('user.id'), primary_key=True)
     balance = Column(Float, default=0, nullable=False)
+    role_id = Column(Integer, ForeignKey("role.id"), default=1)
 
     # Связь с пользователем
     user = relationship("User", back_populates="customer")
+    # Связь с ролью
+    role = relationship("Role", back_populates="customers")
 
 
 class KitchenWorker(Base):
     __tablename__ = 'kitchen_worker'
 
     id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    role_id = Column(Integer, ForeignKey("role.id"), default=3)
 
     # Связь с пользователем
     user = relationship("User", back_populates="kitchen_worker")
+    # Связь с ролью
+    role = relationship("Role", back_populates="kitchen_workers")
+
+
+class Admin(Base):
+    __tablename__ = 'admin'
+
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    role_id = Column(Integer, ForeignKey("role.id"), default=3)
+
+    # Связь с пользователем
+    user = relationship("User", back_populates="admin")
+    # Связь с ролью
+    role = relationship("Role", back_populates="admins")
 
 
 class Restaurant(Base):
