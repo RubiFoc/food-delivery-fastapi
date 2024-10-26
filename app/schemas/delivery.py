@@ -77,3 +77,23 @@ class OrderStatusSchema(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class CartDishSchema(BaseModel):
+    dish_id: int
+    quantity: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+# Схема корзины
+class CartSchema(BaseModel):
+    id: int
+    customer_id: int
+    dishes: List[CartDishSchema] = []
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

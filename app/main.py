@@ -11,6 +11,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(courses_router)
 
+
 if __name__ == "__main__":
     import uvicorn
 

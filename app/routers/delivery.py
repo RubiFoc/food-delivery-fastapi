@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from auth.database import get_async_session
-from models.delivery import DishCategory, Dish
-from schemas.delivery import DishSchema, DishCategorySchema
+from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation
+from schemas.delivery import DishSchema, DishCategorySchema, CartSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -194,9 +194,9 @@ async def delete_dish(id: int, session: AsyncSession = Depends(get_async_session
 
 @router.patch("/dishes/{dish_id}", response_model=DishSchema)
 async def update_dish(
-    dish_id: int,
-    new_dish: DishSchema,
-    session: AsyncSession = Depends(get_async_session)
+        dish_id: int,
+        new_dish: DishSchema,
+        session: AsyncSession = Depends(get_async_session)
 ):
     query = select(Dish).where(Dish.id == dish_id)
     result = await session.execute(query)
@@ -213,3 +213,50 @@ async def update_dish(
     await session.refresh(dish)
 
     return dish
+
+
+@router.post("/cart/{customer_id}/add-dish", response_model=CartSchema)
+async def add_dish_to_cart(
+        customer_id: int,
+        dish_id: int,
+        quantity: int,
+        session: AsyncSession = Depends(get_async_session)
+):
+    # Проверка существования клиента
+    customer = await session.get(Customer, customer_id)
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Проверка существования блюда
+    dish = await session.get(Dish, dish_id)
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+
+    # Поиск корзины или создание новой
+    cart_query = await session.execute(select(Cart).where(Cart.customer_id == customer_id))
+    cart = cart_query.scalars().first()
+
+    if not cart:
+        cart = Cart(customer_id=customer_id)
+        session.add(cart)
+        await session.flush()  # чтобы получить id для нового объекта cart
+
+    # Добавление или обновление блюда в корзине
+    association_query = await session.execute(
+        select(CartDishAssociation)
+        .where(CartDishAssociation.cart_id == cart.id, CartDishAssociation.dish_id == dish_id)
+    )
+    association = association_query.scalars().first()
+
+    if association:
+        association.quantity += quantity  # обновляем количество
+    else:
+        new_association = CartDishAssociation(cart_id=cart.id, dish_id=dish_id, quantity=quantity)
+        session.add(new_association)
+
+    # Сохранение изменений
+    await session.commit()
+    await session.refresh(cart, ["dishes"])  # Загружаем связанные данные для избежания ленивой загрузки
+
+    return CartSchema.from_orm(cart)
+
