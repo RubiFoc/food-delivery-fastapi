@@ -15,9 +15,6 @@ from models.delivery import Role, User
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@DB:{DOCKER_PORT}/{DB_NAME}"
 
 
-# DATABASE_URL = f"postgresql+asyncpg://postgres:postgres@localhost:5434/kurs_db"
-
-
 class Base(DeclarativeBase):
     pass
 
