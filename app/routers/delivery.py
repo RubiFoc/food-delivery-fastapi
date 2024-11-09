@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text, select
 from sqlalchemy.exc import IntegrityError
@@ -5,8 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from auth.database import get_async_session
-from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation
-from schemas.delivery import DishSchema, DishCategorySchema, CartSchema
+from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation, OrderDishAssociation, Order, \
+    OrderStatus
+from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -260,3 +263,64 @@ async def add_dish_to_cart(
 
     return CartSchema.from_orm(cart)
 
+
+@router.post("/cart/{customer_id}/create-order", response_model=OrderSchema)
+async def create_order_from_cart(
+        customer_id: int,
+        session: AsyncSession = Depends(get_async_session)
+):
+    # Получаем корзину пользователя
+    cart_query = await session.execute(
+        select(Cart)
+        .where(Cart.customer_id == customer_id)
+        .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))
+    )
+    cart = cart_query.scalars().first()
+
+    if not cart or not cart.dishes:
+        raise HTTPException(status_code=404, detail="Cart is empty or not found")
+
+    # Вычисляем общую стоимость и вес
+    total_price = sum(dish.quantity * dish.dish.price for dish in cart.dishes)
+    total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
+    location_query = await session.execute(
+        select(Customer.location).where(Customer.id == customer_id)
+    )
+    location = location_query.scalar_one_or_none()
+
+    if not location:
+        raise HTTPException(status_code=404, detail="Customer location not found")
+
+    # Создаем новый заказ
+    new_order = Order(
+        price=total_price,
+        weight=total_weight,
+        time_of_creation=datetime.now(),
+        customer_id=customer_id,
+        location=location,
+        restaurant_id=1
+    )
+    session.add(new_order)
+    await session.flush()
+
+    # Добавляем блюда в заказ
+    for cart_dish in cart.dishes:
+        order_dish = OrderDishAssociation(
+            order_id=new_order.id,
+            dish_id=cart_dish.dish_id,
+            quantity=cart_dish.quantity
+        )
+        session.add(order_dish)
+
+    # Создаем статус для нового заказа
+    order_status = OrderStatus(order_id=new_order.id)
+    session.add(order_status)
+
+    # Очищаем корзину
+    for cart_dish in cart.dishes:
+        await session.delete(cart_dish)
+
+    await session.commit()
+    await session.refresh(new_order)
+
+    return OrderSchema.from_orm(new_order)

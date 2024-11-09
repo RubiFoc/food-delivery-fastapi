@@ -59,6 +59,7 @@ class Customer(Base):
     user = relationship("User", back_populates="customer")
     role = relationship("Role", back_populates="customers")
     cart = relationship("Cart", back_populates="customer")
+    location = Column(String, nullable=True)
 
 
 class KitchenWorker(Base):
@@ -128,25 +129,24 @@ class Order(Base):
     id = Column(Integer, unique=True, primary_key=True)
     price = Column(Float, nullable=False)
     weight = Column(Float, nullable=False)
-    promo = Column(String, nullable=False)
-    promo_discount = Column(Float, nullable=False)
     time_of_creation = Column(DateTime, nullable=False)
     time_of_delivery = Column(DateTime, nullable=True)
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)
     location = Column(String, nullable=False)
-    courier_id = Column(Integer, ForeignKey('courier.id'), nullable=False)
-    kitchen_worker_id = Column(Integer, ForeignKey('kitchen_worker.id'), nullable=False)
+    courier_id = Column(Integer, ForeignKey('courier.id'), nullable=True)
+    kitchen_worker_id = Column(Integer, ForeignKey('kitchen_worker.id'), nullable=True)
     dishes = relationship("OrderDishAssociation", back_populates="order")
     restaurant = relationship("Restaurant", back_populates="orders")
     courier = relationship("Courier", back_populates="orders")
     kitchen_worker = relationship("KitchenWorker", back_populates="orders")
+    customer_id = Column(Integer, ForeignKey("customer.id"))
 
 
 class OrderStatus(Base):
     __tablename__ = 'order_status'
     order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
     is_prepared = Column(Boolean, default=False, nullable=False)
-    is_ready_for_delivery = Column(Boolean, default=False, nullable=False)
+    is_delivered = Column(Boolean, default=False, nullable=False)
 
 
 class CartDishAssociation(Base):

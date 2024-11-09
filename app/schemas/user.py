@@ -39,6 +39,7 @@ class CustomerSchema(BaseModel):
     id: int
     balance: float
     orders: Optional[List['OrderSchema']] = None  # Ссылаемся на OrderSchema, если она определена
+    location: Optional[str] = None
 
     class Config:
         orm_mode = True
