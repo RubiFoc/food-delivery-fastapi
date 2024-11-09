@@ -81,3 +81,4 @@ async def add_balance(id: int, amount: float, session: AsyncSession = Depends(ge
     await session.commit()
 
     return {"message": "Balance updated successfully", "new_balance": customer.balance}
+

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from routers.users import router as auth_router
 from routers.delivery import router as courses_router
+from routers.admin import router as admin_router
 from settings.fastapi_settings import fastapi_settings
 
 app = FastAPI(
@@ -10,6 +11,7 @@ app = FastAPI(
 
 app.include_router(auth_router)
 app.include_router(courses_router)
+app.include_router(admin_router)
 
 
 if __name__ == "__main__":

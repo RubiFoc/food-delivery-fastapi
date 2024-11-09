@@ -324,3 +324,4 @@ async def create_order_from_cart(
     await session.refresh(new_order)
 
     return OrderSchema.from_orm(new_order)
+
