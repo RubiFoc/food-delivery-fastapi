@@ -19,18 +19,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# class User(SQLAlchemyBaseUserTable[int], Base):
-#     id = Column(Integer, unique=True, primary_key=True)
-#     email = Column(String(length=320), nullable=False, unique=True)
-#     username = Column(String, nullable=False)
-#     hashed_password = Column(String(length=1024), nullable=False)
-#     role_id = Column(Integer, ForeignKey("role.id"), nullable=False)
-#     registration_date = Column(DateTime, nullable=False, default=datetime.now)
-#     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-#     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-#     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
-
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 

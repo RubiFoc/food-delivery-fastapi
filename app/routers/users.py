@@ -18,6 +18,7 @@ router = APIRouter(prefix="/auth")
 fastapi_users = FastAPIUsers[BaseUser, int](
     get_user_manager,
     [auth_backend],
+
 )
 
 router.include_router(

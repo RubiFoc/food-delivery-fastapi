@@ -22,7 +22,7 @@ class Role(Base):
 
 class User(Base):
     __tablename__ = 'user'
-    id = Column(Integer, unique=True, primary_key=True)
+    id = Column(Integer, unique=True, primary_key=True, autoincrement=True)
     email = Column(String, nullable=False, unique=True)
     username = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -73,10 +73,11 @@ class KitchenWorker(Base):
 
 class Admin(Base):
     __tablename__ = 'admin'
-    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    role_id = Column(Integer, ForeignKey("role.id"), default=3)
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)  # ForeignKey links to user table
+    role_id = Column(Integer, ForeignKey("role.id"), default=4)
     user = relationship("User", back_populates="admin")
     role = relationship("Role", back_populates="admins")
+
 
 
 class Restaurant(Base):

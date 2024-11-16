@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from fastapi_users import schemas
 from pydantic import BaseModel
@@ -71,3 +71,12 @@ class FullUserSchema(BaseUser):
 
     class Config:
         orm_mode = True
+
+
+class AdminSchema(BaseModel):
+    id: Union[int, UserCreate]
+    role_id: Union[int, RoleSchema]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

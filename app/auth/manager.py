@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, HTTPException
 from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions, models, schemas
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,8 @@ from auth.database import get_user_db, get_async_session
 from models.delivery import User, Customer, Courier, KitchenWorker, Admin
 
 SECRET = SECRET_MANAGER
+
+from sqlalchemy.future import select
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
@@ -47,17 +49,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             request: Optional[Request] = None,
     ) -> models.UP:
         """
-        Создает пользователя в базе данных.
-
-        Запускает обработчик on_after_register при успешном создании.
-
-        :param user_create: Модель UserCreate для создания.
-        :param safe: Если True, чувствительные значения, такие как is_superuser или is_verified
-        будут игнорироваться при создании, по умолчанию False.
-        :param request: Необязательный FastAPI запрос, который
-        инициировал операцию, по умолчанию None.
-        :raises UserAlreadyExists: Пользователь с таким же адресом электронной почты уже существует.
-        :return: Новый пользователь.
+        Создает пользователя в базе данных с проверкой для администраторов.
         """
         await self.validate_password(user_create.password, user_create)
 
@@ -72,7 +64,25 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         )
         password = user_dict.pop("password")
         user_dict["hashed_password"] = self.password_helper.hash(password)
-        user_dict['role_id'] = 1  # Предположим, что новый пользователь - клиент
+        user_dict["is_verified"] = True
+        user_dict["is_superuser"] = True
+
+        # Проверяем роль пользователя
+        if user_create.role_id == 4:  # Роль администратора
+            user_dict["is_verified"] = True
+            user_dict["is_superuser"] = True
+            async for session in get_async_session():
+                result = await session.execute(
+                    select(User).filter(User.role_id == 4)
+                )
+                admin_count = len(result.scalars().all())  # Подсчёт записей
+                if admin_count > 0:
+                    # Проверяем, чтобы запрос был инициирован администратором
+                    # if not request or not hasattr(request, "user"):
+                    #     raise HTTPException(status_code=404, detail="Only an existing admin can create another admin.")
+                    # if not request.user.is_authenticated or request.user.role_id != 4:
+                    #     raise HTTPException(status_code=404, detail="Only an existing admin can create another admin.")
+                    raise HTTPException(status_code=404, detail="Only an existing admin can create another admin.")
 
         created_user = await self.user_db.create(user_dict)
 
