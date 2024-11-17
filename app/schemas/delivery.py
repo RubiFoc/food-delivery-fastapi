@@ -68,7 +68,7 @@ class OrderSchema(BaseModel):
 
 
 class OrderStatusSchema(BaseModel):
-    order_id: int
+    order_id: Union[int, OrderSchema]
     is_prepared: bool = Field(default=False)
     is_delivered: bool = Field(default=False)
 

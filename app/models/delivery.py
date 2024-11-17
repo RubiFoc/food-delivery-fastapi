@@ -136,11 +136,13 @@ class Order(Base):
     location = Column(String, nullable=False)
     courier_id = Column(Integer, ForeignKey('courier.id'), nullable=True)
     kitchen_worker_id = Column(Integer, ForeignKey('kitchen_worker.id'), nullable=True)
+
     dishes = relationship("OrderDishAssociation", back_populates="order")
     restaurant = relationship("Restaurant", back_populates="orders")
     courier = relationship("Courier", back_populates="orders")
     kitchen_worker = relationship("KitchenWorker", back_populates="orders")
     customer_id = Column(Integer, ForeignKey("customer.id"))
+    status = relationship("OrderStatus", back_populates="order", uselist=False)
 
 
 class OrderStatus(Base):
@@ -148,6 +150,9 @@ class OrderStatus(Base):
     order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
     is_prepared = Column(Boolean, default=False, nullable=False)
     is_delivered = Column(Boolean, default=False, nullable=False)
+
+    order = relationship("Order", back_populates="status")
+
 
 
 class CartDishAssociation(Base):
