@@ -1,54 +1,42 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from auth.database import get_async_session
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi_users import FastAPIUsers
+from starlette.requests import Request
+
 from dependencies import get_current_superuser
 from models.delivery import User
-from schemas.user import UserCreate
-from services.admin_service import register_role_user
+from schemas.user import UserCreate, UserRead
+from auth.auth import auth_backend
+from auth.manager import get_admin_manager, AdminManager
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+# Создаем роутер для администраторов
+admin_router = APIRouter(prefix="/admin", tags=["admin"])
 
+# Настраиваем FastAPIUsers для администраторов
+fastapi_users_admin = FastAPIUsers(
+    get_admin_manager,
+    [auth_backend],
+)
 
-@router.post("/register_courier", response_model=UserCreate)
-async def register_courier(
-        user_data: UserCreate,
-        session: AsyncSession = Depends(get_async_session),
-        admin_user=Depends(get_current_superuser)
-):
-    return await register_role_user(user_data, role="courier", session=session)
+admin_router.include_router(
+    fastapi_users_admin.get_register_router(UserRead, UserCreate),
+    prefix="/register",
+)
 
-
-@router.post("/register_kitchen_worker", response_model=UserCreate)
-async def register_kitchen_worker(
-        user_data: UserCreate,
-        session: AsyncSession = Depends(get_async_session),
-        admin_user=Depends(get_current_superuser)
-):
-    return await register_role_user(user_data, role="kitchen_worker", session=session)
-
-
-@router.post("/register_admin", response_model=UserCreate)
+# Проверка аутентификации в других местах
+@admin_router.post("/register")
 async def register_admin(
-        user_data: UserCreate,
-        session: AsyncSession = Depends(get_async_session),
-        admin_user=Depends(get_current_superuser)
+        user_create: UserCreate,
+        request: Request,
+        admin_manager: AdminManager = Depends(get_admin_manager),
+        current_user: User = Depends(get_current_superuser),  # Ensure the current user is a superuser
 ):
-    return await register_role_user(user_data, role="admin", session=session)
+    """
+    Register a new admin. This action can only be performed by an existing admin.
+    """
+    # Check if the current user is a superuser (admin)
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Only an existing admin can create another admin.")
 
-
-@router.post("/register_first_admin", response_model=UserCreate)
-async def register_first_admin(
-        user_data: UserCreate,
-        session: AsyncSession = Depends(get_async_session)
-):
-    # Проверка на существование первого администратора
-    existing_admin = await session.execute(select(User).where(User.role_id == 4))
-    if existing_admin.scalars().first():
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin user already exists. Only the first admin can be created here."
-        )
-
-    # Создание первого администратора
-    return await register_role_user(user_data, role="admin", session=session)
+    # Proceed with the user creation
+    user = await admin_manager.create(user_create, request=request)
+    return user
