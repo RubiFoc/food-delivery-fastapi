@@ -21,7 +21,6 @@ class UserUpdate(schemas.BaseUserUpdate):
     password: Optional[str] = None
 
 
-# Схема для курьеров
 class CourierSchema(BaseModel):
     id: int
     rating: Optional[float] = None
@@ -34,7 +33,6 @@ class CourierSchema(BaseModel):
         orm_mode = True
 
 
-# Схема для клиентов
 class CustomerSchema(BaseModel):
     id: int
     balance: float

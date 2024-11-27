@@ -16,3 +16,5 @@ SECRET = os.environ.get("SECRET", "ajsdio1u90uojahsdasdlaskfaljsf")
 SECRET_MANAGER = os.environ.get("SECRET_MANAGER", "kjadskjahsoijo1i90u2rhskhqf82yhrh1nd")
 API_HOST = "localhost"
 API_PORT = 8000
+
+YANDEX_API_KEY = "4c49979c-a82a-4fda-863b-38812df1351d"

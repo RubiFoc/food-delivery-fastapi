@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text, select
 from sqlalchemy.exc import IntegrityError
@@ -7,22 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from auth.database import get_async_session
+from config import YANDEX_API_KEY
 from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation, OrderDishAssociation, Order, \
     OrderStatus
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
-
-
-@router.get("/healthcheck/db")
-async def db_healthcheck(session: AsyncSession = Depends(get_async_session)):
-    try:
-        # Простой запрос для проверки соединения
-        result = await session.execute(text("SELECT version();"))
-        version = result.scalar()
-        return {"status": "success", "postgres_version": version}
-    except Exception as e:
-        return {"status": "error", "details": str(e)}
 
 
 @router.get("/dish-categories")
@@ -269,7 +260,7 @@ async def create_order_from_cart(
         customer_id: int,
         session: AsyncSession = Depends(get_async_session)
 ):
-    # Получаем корзину пользователя
+    # Получаем корзину покупателя
     cart_query = await session.execute(
         select(Cart)
         .where(Cart.customer_id == customer_id)
@@ -280,18 +271,33 @@ async def create_order_from_cart(
     if not cart or not cart.dishes:
         raise HTTPException(status_code=404, detail="Cart is empty or not found")
 
-    # Вычисляем общую стоимость и вес
+    # Вычисляем общую стоимость и вес заказа
     total_price = sum(dish.quantity * dish.dish.price for dish in cart.dishes)
     total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
-    location_query = await session.execute(
-        select(Customer.location).where(Customer.id == customer_id)
-    )
-    location = location_query.scalar_one_or_none()
 
+    # Получаем информацию о покупателе
+    customer_query = await session.execute(
+        select(Customer).where(Customer.id == customer_id)
+    )
+    customer = customer_query.scalars().first()
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Проверяем баланс покупателя
+    if customer.balance < total_price:
+        raise HTTPException(status_code=400, detail="Insufficient balance to complete the order")
+
+    # Списываем стоимость заказа с баланса покупателя
+    customer.balance -= total_price
+    session.add(customer)  # Обновляем запись в сессии
+
+    # Получаем местоположение покупателя
+    location = customer.location
     if not location:
         raise HTTPException(status_code=404, detail="Customer location not found")
 
-    # Создаем новый заказ
+    # Создаём новый заказ
     new_order = Order(
         price=total_price,
         weight=total_weight,
@@ -301,9 +307,9 @@ async def create_order_from_cart(
         restaurant_id=1
     )
     session.add(new_order)
-    await session.flush()
+    await session.flush()  # Генерируем ID заказа
 
-    # Добавляем блюда в заказ
+    # Добавляем блюда из корзины в заказ
     for cart_dish in cart.dishes:
         order_dish = OrderDishAssociation(
             order_id=new_order.id,
@@ -312,16 +318,71 @@ async def create_order_from_cart(
         )
         session.add(order_dish)
 
-    # Создаем статус для нового заказа
+    # Добавляем статус заказа
     order_status = OrderStatus(order_id=new_order.id)
     session.add(order_status)
 
-    # Очищаем корзину
+    # Очищаем корзину покупателя
     for cart_dish in cart.dishes:
         await session.delete(cart_dish)
 
-    await session.commit()
+    await session.commit()  # Сохраняем все изменения
     await session.refresh(new_order)
 
     return OrderSchema.from_orm(new_order)
 
+
+@router.post("/customer/{customer_id}/update_location", summary="Обновить местоположение пользователя")
+async def update_customer_location(
+        customer_id: int,
+        address: str,
+        session: AsyncSession = Depends(get_async_session)
+):
+    # Добавляем "Минск" к адресу для уточнения
+    address = "Минск, " + address
+    base_url = "https://geocode-maps.yandex.ru/1.x/"
+    params = {
+        "apikey": YANDEX_API_KEY,
+        "geocode": address,
+        "format": "json"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(base_url, params=params)
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail="Ошибка при запросе к Яндекс.Картам")
+
+    data = response.json()
+    try:
+        # Проверяем наличие ответа с координатами
+        geo_objects = data["response"]["GeoObjectCollection"]["featureMember"]
+        if not geo_objects:
+            raise HTTPException(status_code=404, detail="Не найдено местоположение для указанного адреса")
+
+        # Печатаем все координаты для диагностики, можно убрать в продакшн
+        for geo_object in geo_objects:
+            coordinates_str = geo_object["GeoObject"]["Point"]["pos"]
+            print(f"Координаты: {coordinates_str}")  # Для дебага
+
+        # Берём первые доступные координаты, но можно добавить логику выбора наиболее точного
+        geo_object = geo_objects[0]["GeoObject"]
+        coordinates_str = geo_object["Point"]["pos"]
+        longitude, latitude = map(float, coordinates_str.split(" "))
+
+        # Получаем пользователя из базы данных с использованием AsyncSession
+        result = await session.execute(select(Customer).filter(Customer.id == customer_id))
+        customer = result.scalar_one_or_none()
+
+        if not customer:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+        # Обновляем местоположение пользователя
+        customer.location = f"{latitude}, {longitude}"
+
+        # Сохраняем изменения в базе данных
+        await session.commit()
+        return {"customer_id": customer_id, "location": customer.location}
+
+    except (IndexError, KeyError):
+        raise HTTPException(status_code=404, detail="Не удалось найти координаты для указанного адреса")

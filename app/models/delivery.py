@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from psycopg import Time
 from sqlalchemy import (
     Column, Integer, Float, String, ForeignKey, DateTime, Boolean, JSON
 )
@@ -46,9 +48,18 @@ class Courier(Base):
     rate = Column(Float, default=0.1, nullable=False)
     location = Column(String, nullable=False)
     role_id = Column(Integer, ForeignKey("role.id"), default=2)
+
     user = relationship("User", back_populates="courier")
     role = relationship("Role", back_populates="couriers")
     orders = relationship("Order", back_populates="courier")
+
+    def update_rating(self, new_rating):
+        if self.rating is None:
+            self.rating = new_rating
+        else:
+            total_marks = self.number_of_marks + 1
+            self.rating = ((self.rating * self.number_of_marks) + new_rating) / total_marks
+        self.number_of_marks += 1
 
 
 class Customer(Base):
@@ -77,7 +88,6 @@ class Admin(Base):
     role_id = Column(Integer, ForeignKey("role.id"), default=4)
     user = relationship("User", back_populates="admin")
     role = relationship("Role", back_populates="admins")
-
 
 
 class Restaurant(Base):
@@ -109,11 +119,20 @@ class Dish(Base):
     number_of_marks = Column(Integer, default=0, nullable=False)
     profit = Column(Float, nullable=False)
     time_of_preparing = Column(Float, nullable=False)
+
     category = relationship("DishCategory", back_populates="dishes")
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)
     restaurant = relationship("Restaurant", back_populates="dishes")
     orders = relationship("OrderDishAssociation", back_populates="dish")
     cart_associations = relationship("CartDishAssociation", back_populates="dish")
+
+    def update_rating(self, new_rating):
+        if self.rating is None:
+            self.rating = new_rating
+        else:
+            total_marks = self.number_of_marks + 1
+            self.rating = ((self.rating * self.number_of_marks) + new_rating) / total_marks
+        self.number_of_marks += 1
 
 
 class OrderDishAssociation(Base):
@@ -136,6 +155,7 @@ class Order(Base):
     location = Column(String, nullable=False)
     courier_id = Column(Integer, ForeignKey('courier.id'), nullable=True)
     kitchen_worker_id = Column(Integer, ForeignKey('kitchen_worker.id'), nullable=True)
+    time_of_delivery = Column(DateTime, default=None, nullable=True)
 
     dishes = relationship("OrderDishAssociation", back_populates="order")
     restaurant = relationship("Restaurant", back_populates="orders")
@@ -152,7 +172,6 @@ class OrderStatus(Base):
     is_delivered = Column(Boolean, default=False, nullable=False)
 
     order = relationship("Order", back_populates="status")
-
 
 
 class CartDishAssociation(Base):

@@ -14,9 +14,9 @@ kitchen_worker_router = APIRouter(prefix="/kitchen_worker", tags=["kitchen_worke
 # Маршрут для обновления статуса приготовления заказа
 @kitchen_worker_router.put("/{order_id}/prepare", response_model=OrderStatusSchema)
 async def prepare_order(
-    order_id: int,
-    session: AsyncSession = Depends(get_async_session),
-    current_kitchen_worker: KitchenWorker = Depends(get_current_kitchen_worker)
+        order_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_kitchen_worker: KitchenWorker = Depends(get_current_kitchen_worker)
 ):
     # Получаем заказ по ID
     result = await session.execute(
@@ -60,12 +60,10 @@ async def prepare_order(
     )
 
 
-
-
 @kitchen_worker_router.get("/orders/not_ready", response_model=list[OrderStatusSchema])
 async def get_not_ready_orders(
-    session: AsyncSession = Depends(get_async_session),
-    current_kitchen_worker: KitchenWorker = Depends(get_current_kitchen_worker)
+        session: AsyncSession = Depends(get_async_session),
+        current_kitchen_worker: KitchenWorker = Depends(get_current_kitchen_worker)
 ):
     # Получаем все заказы, которые еще не готовы
     result = await session.execute(

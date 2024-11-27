@@ -11,10 +11,8 @@ from schemas.user import UserCreate, UserRead
 from auth.auth import auth_backend
 from auth.manager import get_admin_manager, AdminManager
 
-# Создаем роутер для администраторов
 admin_router = APIRouter(prefix="/admin", tags=["admin"])
 
-# Настраиваем FastAPIUsers для администраторов
 fastapi_users_admin = FastAPIUsers(
     get_admin_manager,
     [auth_backend],
@@ -36,11 +34,9 @@ async def register_admin(
     """
     Register a new admin. This action can only be performed by an existing admin.
     """
-    # Check if the current user is a superuser (admin)
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Only an existing admin can create another admin.")
 
-    # Proceed with the user creation
     user = await admin_manager.create(user_create, request=request)
     return user
 
@@ -94,10 +90,8 @@ async def unblock_user(
     if user_to_unblock.is_active is True:
         raise HTTPException(status_code=400, detail="User is not blocked.")
 
-    # Unblock the user by setting is_active to True
     user_to_unblock.is_active = True
 
-    # Commit the changes to the database
     await session.commit()
 
     return {"message": f"User {user_to_unblock.username} has been unblocked."}

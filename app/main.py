@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.authentication import AuthenticationMiddleware
 
 from auth.auth import auth_backend
+from routers.courier import courier_router
 from routers.courier_worker import courier_worker_router
 from routers.users import router as auth_router
 from routers.delivery import router as delivery_router
@@ -19,6 +20,7 @@ app.include_router(auth_router)
 app.include_router(delivery_router)
 app.include_router(admin_router)
 app.include_router(kitchen_worker_router)
+app.include_router(courier_router)
 
 
 if __name__ == "__main__":
