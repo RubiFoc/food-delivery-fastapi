@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from auth.auth import auth_backend
 from routers.courier import courier_router
@@ -22,6 +23,13 @@ app.include_router(admin_router)
 app.include_router(kitchen_worker_router)
 app.include_router(courier_router)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if __name__ == "__main__":
     import uvicorn
