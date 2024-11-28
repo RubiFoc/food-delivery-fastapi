@@ -140,6 +140,7 @@ class OrderDishAssociation(Base):
     order_id = Column(Integer, ForeignKey('order.id'), primary_key=True)
     dish_id = Column(Integer, ForeignKey('dish.id'), primary_key=True)
     quantity = Column(Integer, nullable=False)
+
     order = relationship("Order", back_populates="dishes")
     dish = relationship("Dish", back_populates="orders")
 
@@ -156,6 +157,7 @@ class Order(Base):
     courier_id = Column(Integer, ForeignKey('courier.id'), nullable=True)
     kitchen_worker_id = Column(Integer, ForeignKey('kitchen_worker.id'), nullable=True)
     time_of_delivery = Column(DateTime, default=None, nullable=True)
+    expected_time_of_delivery = Column(DateTime, default=None, nullable=True)
 
     dishes = relationship("OrderDishAssociation", back_populates="order")
     restaurant = relationship("Restaurant", back_populates="orders")
@@ -179,6 +181,7 @@ class CartDishAssociation(Base):
     cart_id = Column(Integer, ForeignKey('cart.id'), primary_key=True)
     dish_id = Column(Integer, ForeignKey('dish.id'), primary_key=True)
     quantity = Column(Integer, nullable=False)
+
     cart = relationship("Cart", back_populates="dishes")
     dish = relationship("Dish", back_populates="cart_associations")
 

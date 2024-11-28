@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from geopy.distance import geodesic
 
 from auth.database import get_async_session
+from config import YANDEX_API_KEY
 from dependencies import get_current_courier
 from models.delivery import Courier, Order, OrderStatus
 from schemas.delivery import OrderStatusSchema
@@ -48,80 +50,75 @@ async def get_not_delivered_orders(
     return order_status_list
 
 
-@courier_router.put("/{order_id}/take", response_model=OrderStatusSchema)
+async def get_coordinates(location: str) -> tuple:
+    url = f"https://geocode-maps.yandex.ru/1.x/?apikey={YANDEX_API_KEY}&geocode={"Минск, " + location}&format=json"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch coordinates from Yandex API")
+        geo_data = response.json()
+        coordinates = geo_data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]["Point"]["pos"]
+        lon, lat = map(float, coordinates.split())
+        return lat, lon
+
+
+@courier_router.post("/orders/{order_id}/take")
 async def take_order(
         order_id: int,
+        courier_location: str,
         session: AsyncSession = Depends(get_async_session),
         current_courier: Courier = Depends(get_current_courier)
 ):
-    # Получаем заказ по ID
+    # Получаем заказ с предзагрузкой связанных блюд и статуса
     result = await session.execute(
-        select(Order).where(Order.id == order_id).options(selectinload(Order.status))
+        select(Order)
+        .where(Order.id == order_id)
+        .options(selectinload(Order.dishes), selectinload(Order.status))
     )
-    order = result.scalar_one_or_none()
+    order: Order = result.scalars().first()
 
-    # Если заказ не найден, выбрасываем ошибку
+    # Проверка существования и статуса заказа
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    if order.status.is_delivered:
+        raise HTTPException(status_code=400, detail="Order already delivered")
+    if order.courier_id:
+        raise HTTPException(status_code=400, detail="Order already taken by another courier")
+    if not order.status.is_prepared:
+        raise HTTPException(status_code=400, detail="Order is not prepared yet")
 
-    # Проверяем, что заказ еще не был взят курьером
-    if order.courier_id is not None:
-        raise HTTPException(status_code=400, detail="Order is already taken by another courier")
+    # Получаем координаты курьера и заказчика
+    courier_coords = await get_coordinates(courier_location)
+    customer_coords = tuple(map(float, order.location.split(",")))
 
-    # Получаем клиента по его customer_id
-    customer_result = await session.execute(
-        select(Courier).where(Courier.id == order.customer_id)
+    # Расчет расстояния и времени на доставку
+    distance_km = geodesic(courier_coords, customer_coords).kilometers
+    delivery_time_minutes = distance_km * 0.86  # Допустимая скорость — 70 км/ч (~0.86 мин/км)
+
+    # Проверяем, что блюда в заказе существуют и есть время на приготовление
+    if not order.dishes:
+        raise HTTPException(status_code=400, detail="No dishes in the order")
+
+    # Получаем максимальное время приготовления блюда
+    max_preparing_time = 20
+    # Общее расчетное время доставки
+    expected_time_of_delivery = (
+            order.time_of_creation +
+            timedelta(minutes=max_preparing_time) +
+            timedelta(minutes=delivery_time_minutes)
     )
-    customer = customer_result.scalar_one_or_none()
 
-    # Если клиент не найден, выбрасываем ошибку
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+    # Обновляем курьера с его локацией
+    current_courier.location = courier_location  # Обновляем локацию курьера
+    order.courier_id = current_courier.id  # Назначаем курьера на заказ
+    order.expected_time_of_delivery = expected_time_of_delivery  # Сохраняем время ожидания доставки
 
-    # Получаем координаты курьера
-    if current_courier.location:
-        courier_location = current_courier.location.split(', ')  # Курьерская локация в формате "lat, lon"
-        courier_lat, courier_lon = float(courier_location[0]), float(courier_location[1])
-    else:
-        # Если у курьера нет локации, назначаем значения по умолчанию
-        courier_lat, courier_lon = 0.0, 0.0
-
-    # Получаем координаты клиента (из заказа)
-    if customer.location:
-        customer_location = customer.location.split(', ')  # Клиентская локация в формате "lat, lon"
-        customer_lat, customer_lon = float(customer_location[0]), float(customer_location[1])
-    else:
-        # Если у клиента нет локации, назначаем значения по умолчанию
-        customer_lat, customer_lon = 0.0, 0.0
-
-    # Рассчитываем расстояние между курьером и клиентом
-    distance_km = geodesic((courier_lat, courier_lon), (customer_lat, customer_lon)).km
-
-    # Примерное время на маршрут: 5 км в час (передвижение на машине)
-    speed_kmh = 50  # Средняя скорость 50 км/ч
-    travel_time_hours = distance_km / speed_kmh
-    travel_time = timedelta(hours=travel_time_hours)
-
-    # Находим самое долгое время приготовления из всех блюд в заказе
-    max_preparation_time = max(dish.dish.time_of_preparing for dish in order.dishes)
-
-    # Время ожидания = время на приготовление самого долгого блюда + время на маршрут
-    waiting_time = timedelta(minutes=max_preparation_time) + travel_time
-
-    # Устанавливаем ID курьера для этого заказа
-    order.courier_id = current_courier.id
-    order.time_of_delivery = datetime.now() + waiting_time  # Ожидаемое время доставки
-
-    # Сохраняем изменения в базе данных
+    # Сохраняем изменения
+    session.add(current_courier)
+    session.add(order)
     await session.commit()
 
-    # Возвращаем обновленный статус заказа
-    return OrderStatusSchema(
-        order_id=order.id,
-        is_prepared=order.status.is_prepared,
-        is_delivered=order.status.is_delivered
-    )
-
+    return {"message": "Order taken successfully", "expected_time_of_delivery": expected_time_of_delivery}
 
 
 
