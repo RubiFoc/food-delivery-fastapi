@@ -6,34 +6,42 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      return;
-    }
-    try {
-      const response = await fetch('/auth/jwt/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: email,
-          password: password,
-        }),
-      });
+const handleRegister = async (e) => {
+  e.preventDefault();
+  if (password !== confirmPassword) {
+    setError("Passwords don't match");
+    return;
+  }
 
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
+  try {
+    const response = await fetch('http://127.0.0.1:8000/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,           // Используем 'email' вместо 'username'
+        username: email.split('@')[0], // Можно создать username из email
+        password: password,
+        is_active: true,        // Значения по умолчанию
+        is_superuser: false,
+        is_verified: false,
+        role_id: 1,             // Убедитесь, что role_id корректен
+      }),
+    });
 
-      // handle success, e.g., redirect to login or automatically log in
-      window.location.href = '/login'; // or to another page
-    } catch (error) {
-      setError('Registration failed, please try again');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Registration failed');
     }
-  };
+
+    // Обработка успешной регистрации
+    window.location.href = '/login';
+  } catch (error) {
+    console.error(error);
+    setError(error.message || 'Registration failed, please try again');
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -15,7 +15,6 @@ app = FastAPI(
     title="Food delivery"
 )
 
-# app.add_middleware(AuthenticationMiddleware, backend=auth_backend)
 app.include_router(courier_worker_router)
 app.include_router(auth_router)
 app.include_router(delivery_router)
