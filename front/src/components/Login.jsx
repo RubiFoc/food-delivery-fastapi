@@ -5,33 +5,34 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  const formData = new URLSearchParams();
-  formData.append('username', email);
-  formData.append('password', password);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const formData = new URLSearchParams();
+    formData.append('username', email);
+    formData.append('password', password);
 
-  try {
-    const response = await fetch('http://127.0.0.1:8000/auth/jwt/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString(),
-    });
+    try {
+      const response = await fetch('http://127.0.0.1:8000/auth/jwt/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        credentials: 'include', // Включаем передачу куки
+        body: formData.toString(),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to login');
+      if (response.status === 204) {
+        // Логин успешен, перенаправляем пользователя
+        window.location.href = '/';
+      } else if (!response.ok) {
+        throw new Error('Failed to login');
+      }
+
+    } catch (error) {
+      console.error(error);
+      setError('Invalid credentials, please try again');
     }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.access_token);
-    window.location.href = '/dashboard'; // Перенаправление после успешного входа
-  } catch (error) {
-    console.error(error);
-    setError('Invalid credentials, please try again');
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

@@ -9,8 +9,9 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from auth.database import get_async_session
 from config import YANDEX_API_KEY
+from dependencies import get_current_user
 from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation, OrderDishAssociation, Order, \
-    OrderStatus
+    OrderStatus, User
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -209,15 +210,15 @@ async def update_dish(
     return dish
 
 
-@router.post("/cart/{customer_id}/add-dish", response_model=CartSchema)
+@router.post("/cart/add-dish", response_model=CartSchema)
 async def add_dish_to_cart(
-        customer_id: int,
         dish_id: int,
         quantity: int,
-        session: AsyncSession = Depends(get_async_session)
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_user)  # Получаем текущего пользователя
 ):
     # Проверка существования клиента
-    customer = await session.get(Customer, customer_id)
+    customer = current_user  # Текущий пользователь — это клиент
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
@@ -227,11 +228,11 @@ async def add_dish_to_cart(
         raise HTTPException(status_code=404, detail="Dish not found")
 
     # Поиск корзины или создание новой
-    cart_query = await session.execute(select(Cart).where(Cart.customer_id == customer_id))
+    cart_query = await session.execute(select(Cart).where(Cart.customer_id == customer.id))
     cart = cart_query.scalars().first()
 
     if not cart:
-        cart = Cart(customer_id=customer_id)
+        cart = Cart(customer_id=customer.id)
         session.add(cart)
         await session.flush()  # чтобы получить id для нового объекта cart
 
@@ -255,15 +256,15 @@ async def add_dish_to_cart(
     return CartSchema.from_orm(cart)
 
 
-@router.post("/cart/{customer_id}/create-order", response_model=OrderSchema)
+@router.post("/cart/create-order", response_model=OrderSchema)
 async def create_order_from_cart(
-        customer_id: int,
+        current_user: User = Depends(get_current_user),  # Получаем текущего пользователя
         session: AsyncSession = Depends(get_async_session)
 ):
     # Получаем корзину покупателя
     cart_query = await session.execute(
         select(Cart)
-        .where(Cart.customer_id == customer_id)
+        .where(Cart.customer_id == current_user.id)  # Используем current_user.id вместо customer_id из URL
         .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))
     )
     cart = cart_query.scalars().first()
@@ -276,13 +277,7 @@ async def create_order_from_cart(
     total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
 
     # Получаем информацию о покупателе
-    customer_query = await session.execute(
-        select(Customer).where(Customer.id == customer_id)
-    )
-    customer = customer_query.scalars().first()
-
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
+    customer = current_user  # Мы уже имеем информацию о пользователе в current_user
 
     # Проверяем баланс покупателя
     if customer.balance < total_price:
@@ -302,7 +297,7 @@ async def create_order_from_cart(
         price=total_price,
         weight=total_weight,
         time_of_creation=datetime.now(),
-        customer_id=customer_id,
+        customer_id=current_user.id,  # Используем current_user.id вместо customer_id
         location=location,
         restaurant_id=1
     )
@@ -330,7 +325,6 @@ async def create_order_from_cart(
     await session.refresh(new_order)
 
     return OrderSchema.from_orm(new_order)
-
 
 @router.post("/customer/{customer_id}/update_location", summary="Обновить местоположение пользователя")
 async def update_customer_location(

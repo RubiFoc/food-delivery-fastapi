@@ -24,10 +24,10 @@ app.include_router(courier_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],  # Укажите ваш фронтенд-домен
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Или конкретные методы, например, ["GET", "POST"]
+    allow_headers=["*"],  # Или конкретные заголовки
 )
 
 if __name__ == "__main__":
