@@ -6,14 +6,21 @@ function KitchenOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // Функция для получения Bearer токена из localStorage
+    const getAuthToken = () => {
+        return localStorage.getItem('token'); // Предположим, что токен сохраняется в localStorage
+    };
+
     // Загрузка невыполненных заказов
     const fetchOrders = async () => {
         setLoading(true);
         try {
+            const token = getAuthToken(); // Получаем токен
             const response = await fetch('http://127.0.0.1:8000/kitchen_worker/orders/not_ready', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Добавляем токен в заголовок
                 },
                 credentials: 'include', // Отправка кук с запросом
             });
@@ -34,10 +41,12 @@ function KitchenOrders() {
     const markAsPrepared = async (orderId) => {
         setLoading(true); // Устанавливаем статус загрузки при обновлении
         try {
+            const token = getAuthToken(); // Получаем токен
             const response = await fetch(`http://127.0.0.1:8000/kitchen_worker/${orderId}/prepare`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Добавляем токен в заголовок
                 },
                 credentials: 'include', // Отправка кук с запросом
             });

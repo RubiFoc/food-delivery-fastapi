@@ -17,14 +17,19 @@ function Login() {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        credentials: 'include', // Включаем передачу куки
         body: formData.toString(),
       });
 
-      if (response.status === 204) {
+      if (response.ok) {
+        const data = await response.json();
+        const token = data.access_token;
+
+        // Сохраняем Bearer токен в localStorage или в state
+        localStorage.setItem('token', token);
+
         // Логин успешен, перенаправляем пользователя
         window.location.href = '/';
-      } else if (!response.ok) {
+      } else {
         throw new Error('Failed to login');
       }
 

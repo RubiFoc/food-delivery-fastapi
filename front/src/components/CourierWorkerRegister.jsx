@@ -1,117 +1,95 @@
-import {useState} from 'react';
+import { useEffect, useState } from 'react';
+import { Button, Card, message } from 'antd';
+import 'tailwindcss/tailwind.css';
 
-function CourierWorkerRegister() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [role, setRole] = useState('2'); // 2 - Курьер по умолчанию
-    const [error, setError] = useState('');
+function KitchenOrders() {
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [token, setToken] = useState(localStorage.getItem('token')); // Retrieve the token from localStorage
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        if (password !== confirmPassword) {
-            setError("Passwords don't match");
-            return;
-        }
-
+    // Load pending orders
+    const fetchOrders = async () => {
+        setLoading(true);
         try {
-            const response = await fetch('http://127.0.0.1:8000/courier_worker/register/register', {
-                method: 'POST',
+            const response = await fetch('http://127.0.0.1:8000/kitchen_worker/orders/not_ready', {
+                method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Add Bearer token
                 },
-                body: JSON.stringify({
-                    email: email,           // Используем 'email' вместо 'username'
-                    username: email.split('@')[0], // Можно создать username из email
-                    password: password,
-                    is_active: true,        // Значения по умолчанию
-                    is_superuser: false,
-                    is_verified: false,
-                    role_id: parseInt(role), // Роль курьера или работника кухни
-                }),
             });
-            console.log(response)
-
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Registration failed');
+                throw new Error('Failed to fetch orders');
             }
-
-            // Обработка успешной регистрации
-            window.location.href = '/login';
+            const data = await response.json();
+            setOrders(data);
         } catch (error) {
             console.error(error);
-            setError(error.message || 'Registration failed, please try again');
+            message.error('Ошибка при загрузке заказов');
+        } finally {
+            setLoading(false);
         }
     };
 
+    // Update order status to "prepared"
+    const markAsPrepared = async (orderId) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/kitchen_worker/${orderId}/prepare`, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`, // Add Bearer token
+                },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to update order');
+            }
+            message.success(`Заказ ${orderId} отмечен как выполненный`);
+            fetchOrders(); // Refresh the orders list
+        } catch (error) {
+            console.error(error);
+            message.error('Ошибка при обновлении заказа');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchOrders(); // Load orders on component mount
+    }, [token]);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-                <h2 className="text-2xl font-bold text-center mb-6">Register Courier or Kitchen Worker</h2>
-                {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                <form onSubmit={handleRegister}>
-                    <div className="mb-4">
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            id="email"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
+            <div className="max-w-4xl w-full p-6">
+                <h1 className="text-3xl font-bold text-center mb-8">Невыполненные заказы</h1>
+                {loading ? (
+                    <p className="text-center text-gray-500">Загрузка...</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {orders.length === 0 ? (
+                            <p className="col-span-2 text-center text-gray-500">Нет невыполненных заказов</p>
+                        ) : (
+                            orders.map(order => (
+                                <Card key={order.order_id} className="shadow-md">
+                                    <p className="text-lg font-semibold">Заказ ID: {order.order_id}</p>
+                                    <p>Статус: {order.is_prepared ? 'Готов' : 'Не готов'}</p>
+                                    <Button
+                                        type="primary"
+                                        className={`mt-4 w-full ${loading ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                                        onClick={() => markAsPrepared(order.order_id)}
+                                        disabled={loading || order.is_prepared}
+                                    >
+                                        {loading ? 'Обрабатывается...' : 'Выполнен'}
+                                    </Button>
+                                </Card>
+                            ))
+                        )}
                     </div>
-                    <div className="mb-4">
-                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            id="password"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700">
-                            Confirm Password
-                        </label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label htmlFor="role" className="block text-sm font-semibold text-gray-700">
-                            Role
-                        </label>
-                        <select
-                            id="role"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            required
-                        >
-                            <option value="2">Courier</option>
-                            <option value="3">Kitchen Worker</option>
-                        </select>
-                    </div>
-                    <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md">
-                        Register
-                    </button>
-                </form>
+                )}
             </div>
         </div>
     );
 }
 
-export default CourierWorkerRegister;
+export default KitchenOrders;

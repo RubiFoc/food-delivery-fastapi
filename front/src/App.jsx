@@ -7,7 +7,9 @@ import MainPage from "./components/MainPage.jsx";
 import RegisterAdmin from "./components/RegisterAdmin.jsx";
 import CourierWorkerRegister from "./components/CourierWorkerRegister.jsx";
 import KitchenOrders from "./components/KitchenOrders.jsx";
-import CreateOrder from "./components/CreateOrder.jsx";
+import CourierPage from "./components/CourierPage.jsx";
+import OrderPage from "./components/OrderPage.jsx";
+import AddBalance from "./components/AddBalance.jsx";
 
 const App = () => {
     const [dishes, setDishes] = useState([]);
@@ -24,8 +26,9 @@ const App = () => {
                     <Route path="/admin/register" element={<RegisterAdmin/>}/>
                     <Route path="/register/courier_or_worker" element={<CourierWorkerRegister/>}/>
                     <Route path="/kitchen_orders" element={<KitchenOrders/>}/>
-                    <Route path="/create_order" element={<CreateOrder/>}/>
-
+                    <Route path="/create_order" element={<OrderPage/>}/>
+                    <Route path="/add_balance" element={<AddBalance/>}/>
+                    <Route path="/courier/take_order" element={<CourierPage/>}/>
 
                 </Routes>
             </Router>

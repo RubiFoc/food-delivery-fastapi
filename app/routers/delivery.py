@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,7 +13,9 @@ from config import YANDEX_API_KEY
 from dependencies import get_current_user
 from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociation, OrderDishAssociation, Order, \
     OrderStatus, User
+from schemas.cart import CartDishAddRequest
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
+from schemas.order import DetailedOrderSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -210,43 +213,74 @@ async def update_dish(
     return dish
 
 
+@router.get("/dishes/{dish_id}", response_model=DishSchema)
+async def get_dish_by_id(dish_id: int, session: AsyncSession = Depends(get_async_session)):
+    # Выполнение запроса на поиск блюда по ID
+    result = await session.execute(select(Dish).where(Dish.id == dish_id))
+    dish = result.scalars().first()
+
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+
+    # Возвращаем данные блюда в соответствии с схемой DishSchema
+    return DishSchema.from_orm(dish)
+
+
+@router.get("/cart", response_model=CartSchema)
+async def get_cart(
+        current_user: User = Depends(get_current_user),
+        session: AsyncSession = Depends(get_async_session)
+):
+    # Получаем корзину покупателя
+    cart_query = await session.execute(
+        select(Cart)
+        .where(Cart.customer_id == current_user.id)  # Используем current_user.id для идентификации покупателя
+        .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))  # Загружаем связанные блюда
+    )
+    cart = cart_query.scalars().first()
+
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+
+    # Возвращаем данные о корзине
+    return CartSchema.from_orm(cart)
+
+
 @router.post("/cart/add-dish", response_model=CartSchema)
 async def add_dish_to_cart(
-        dish_id: int,
-        quantity: int,
+        request: CartDishAddRequest,  # Используем схему для запроса
         session: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(get_current_user)  # Получаем текущего пользователя
 ):
-    # Проверка существования клиента
-    customer = current_user  # Текущий пользователь — это клиент
-    if not customer:
+    # Проверка существования пользователя
+    if not current_user:
         raise HTTPException(status_code=404, detail="Customer not found")
 
     # Проверка существования блюда
-    dish = await session.get(Dish, dish_id)
+    dish = await session.get(Dish, request.dish_id)
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
 
     # Поиск корзины или создание новой
-    cart_query = await session.execute(select(Cart).where(Cart.customer_id == customer.id))
+    cart_query = await session.execute(select(Cart).where(Cart.customer_id == current_user.id))
     cart = cart_query.scalars().first()
 
     if not cart:
-        cart = Cart(customer_id=customer.id)
+        cart = Cart(customer_id=current_user.id)
         session.add(cart)
         await session.flush()  # чтобы получить id для нового объекта cart
 
     # Добавление или обновление блюда в корзине
     association_query = await session.execute(
         select(CartDishAssociation)
-        .where(CartDishAssociation.cart_id == cart.id, CartDishAssociation.dish_id == dish_id)
+        .where(CartDishAssociation.cart_id == cart.id, CartDishAssociation.dish_id == request.dish_id)
     )
     association = association_query.scalars().first()
 
     if association:
-        association.quantity += quantity  # обновляем количество
+        association.quantity += request.quantity  # обновляем количество
     else:
-        new_association = CartDishAssociation(cart_id=cart.id, dish_id=dish_id, quantity=quantity)
+        new_association = CartDishAssociation(cart_id=cart.id, dish_id=request.dish_id, quantity=request.quantity)
         session.add(new_association)
 
     # Сохранение изменений
@@ -254,7 +288,6 @@ async def add_dish_to_cart(
     await session.refresh(cart, ["dishes"])  # Загружаем связанные данные для избежания ленивой загрузки
 
     return CartSchema.from_orm(cart)
-
 
 @router.post("/cart/create-order", response_model=OrderSchema)
 async def create_order_from_cart(
@@ -277,7 +310,11 @@ async def create_order_from_cart(
     total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
 
     # Получаем информацию о покупателе
-    customer = current_user  # Мы уже имеем информацию о пользователе в current_user
+    customer_query = await session.execute(select(Customer).filter(Customer.id == current_user.id))
+    customer = customer_query.scalars().first()  # Извлекаем сам объект Customer
+
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
 
     # Проверяем баланс покупателя
     if customer.balance < total_price:
@@ -325,6 +362,7 @@ async def create_order_from_cart(
     await session.refresh(new_order)
 
     return OrderSchema.from_orm(new_order)
+
 
 @router.post("/customer/{customer_id}/update_location", summary="Обновить местоположение пользователя")
 async def update_customer_location(
@@ -380,3 +418,23 @@ async def update_customer_location(
 
     except (IndexError, KeyError):
         raise HTTPException(status_code=404, detail="Не удалось найти координаты для указанного адреса")
+
+# @router.get("/orders/detailed", response_model=List[DetailedOrderSchema])
+# async def get_detailed_orders(
+#     current_user: User = Depends(get_current_user),
+#     session: AsyncSession = Depends(get_async_session)
+# ):
+#     result = await session.execute(
+#         select(Order)
+#         .where(Order.customer_id == current_user.id)
+#         .options(
+#             joinedload(Order.dishes).joinedload(OrderDishAssociation.dish),
+#             joinedload(Order.customer_id)  # Для получения информации о заказчике
+#         )
+#     )
+#     orders = result.scalars().all()
+#
+#     if not orders:
+#         raise HTTPException(status_code=404, detail="No orders found")
+#
+#     return [DetailedOrderSchema.from_orm(order) for order in orders]

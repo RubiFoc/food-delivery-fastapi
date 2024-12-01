@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import FastAPIUsers
 from fastapi_users.schemas import BaseUser
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -64,10 +65,25 @@ async def get_users(user: BaseUser = Depends(get_current_superuser),
     return users
 
 
-@router.post('/user/{id}')
-async def add_balance(id: int, amount: float, session: AsyncSession = Depends(get_async_session)):
+class BalanceUpdateRequest(BaseModel):
+    amount: float
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+@router.post('/user/balance')
+async def add_balance(
+        balance: BalanceUpdateRequest,  # Используем модель для валидации
+        current_user: User = Depends(get_current_user),
+        session: AsyncSession = Depends(get_async_session)
+):
+    amount = balance.amount  # Получаем amount из модели
+    user_id = current_user.id
+
     # Проверяем, существует ли пользователь с данным id
-    query = select(Customer).where(Customer.id == id)
+    query = select(Customer).where(Customer.id == user_id)
     result = await session.execute(query)
     customer = result.scalar_one_or_none()
 
@@ -83,3 +99,19 @@ async def add_balance(id: int, amount: float, session: AsyncSession = Depends(ge
 
     return {"message": "Balance updated successfully", "new_balance": customer.balance}
 
+
+@router.get('/user/balance')
+async def get_balance(
+        current_user: BaseUser = Depends(get_current_user),
+        session: AsyncSession = Depends(get_async_session)
+):
+    user_id = current_user.id
+
+    query = select(Customer).where(Customer.id == user_id)
+    result = await session.execute(query)
+    customer = result.scalar_one_or_none()
+
+    if customer is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"balance": customer.balance}

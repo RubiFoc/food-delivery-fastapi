@@ -122,6 +122,7 @@ async def take_order(
 
 
 
+
 # Маршрут для уведомления о доставке заказа курьером
 @courier_router.put("/{order_id}/deliver", response_model=OrderStatusSchema)
 async def deliver_order(
@@ -171,3 +172,33 @@ async def deliver_order(
         is_prepared=order_status_record.is_prepared,
         is_delivered=order_status_record.is_delivered
     )
+
+
+@courier_router.get("/orders/assigned", response_model=list[OrderStatusSchema])
+async def get_assigned_orders(
+        session: AsyncSession = Depends(get_async_session),
+        current_courier: Courier = Depends(get_current_courier)
+):
+    # Получаем заказы, назначенные текущему курьеру, которые еще не доставлены
+    result = await session.execute(
+        select(Order)
+        .where(Order.courier_id == current_courier.id)
+        .options(selectinload(Order.status))
+    )
+
+    orders = result.scalars().all()
+
+    if not orders:
+        raise HTTPException(status_code=404, detail="No assigned orders found")
+
+    # Формируем список схем
+    order_status_list = [
+        OrderStatusSchema(
+            order_id=order.id,
+            is_prepared=order.status.is_prepared,
+            is_delivered=order.status.is_delivered
+        )
+        for order in orders
+    ]
+
+    return order_status_list
