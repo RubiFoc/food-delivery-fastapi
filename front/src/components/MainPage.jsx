@@ -1,21 +1,22 @@
-import {useState, useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Select, Spin, message } from 'antd';
+import { LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import './styles/style.css';  // Импорт CSS-файла
 
 function MainPage() {
+    const [token, setToken] = useState(localStorage.getItem('token'));
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [dishes, setDishes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
     const [cart, setCart] = useState([]);
     const [customerId, setCustomerId] = useState(null);
-    const [balance, setBalance] = useState(0); // Добавлено состояние для баланса
-    const [token, setToken] = useState(localStorage.getItem('token')); // Получаем токен из localStorage
+    const [balance, setBalance] = useState(0);
+    const navigate = useNavigate();
 
-    // Проверка аутентификации при загрузке страницы
     useEffect(() => {
         const checkAuth = async () => {
             if (!token) {
@@ -41,19 +42,17 @@ function MainPage() {
                     setIsAuthenticated(false);
                 }
             } catch (error) {
-                console.error('Authentication check failed:', error);
+                console.error('Ошибка при проверке аутентификации:', error);
                 setIsAuthenticated(false);
             }
         };
         checkAuth();
     }, [token]);
 
-    // Загрузка блюд при смене категории
     useEffect(() => {
         fetchDishes();
-    }, [selectedCategory]); // Добавлено зависимостью от selectedCategory
+    }, [selectedCategory]);
 
-    // Функция для получения категорий
     const fetchCategories = async () => {
         try {
             const response = await fetch('http://127.0.0.1:8000/api/dish-categories', {
@@ -63,16 +62,15 @@ function MainPage() {
                 },
             });
 
-            if (!response.ok) throw new Error('Failed to fetch categories');
+            if (!response.ok) throw new Error('Не удалось загрузить категории');
             const data = await response.json();
             setCategories(data);
         } catch (error) {
             console.error(error);
-            setError('Failed to fetch categories, please try again');
+            setError('Не удалось загрузить категории, попробуйте снова');
         }
     };
 
-    // Функция для получения блюд
     const fetchDishes = async () => {
         setLoading(true);
         setError('');
@@ -88,18 +86,17 @@ function MainPage() {
                 },
             });
 
-            if (!response.ok) throw new Error('Failed to fetch dishes');
+            if (!response.ok) throw new Error('Не удалось загрузить блюда');
             const data = await response.json();
             setDishes(data);
         } catch (error) {
             console.error(error);
-            setError('Failed to fetch dishes, please try again');
+            setError('Не удалось загрузить блюда, попробуйте снова');
         } finally {
             setLoading(false);
         }
     };
 
-    // Функция для получения баланса
     const fetchBalance = async () => {
         try {
             const response = await fetch('http://127.0.0.1:8000/auth/user/balance', {
@@ -116,43 +113,11 @@ function MainPage() {
                 setBalance(0);
             }
         } catch (error) {
-            console.error('Error fetching balance:', error);
-            setError('Failed to fetch balance');
+            console.error('Ошибка при получении баланса:', error);
+            setError('Не удалось получить баланс');
         }
     };
 
-    // Логин
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-
-        try {
-            const response = await fetch('http://127.0.0.1:8000/auth/jwt/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: formData.toString(),
-            });
-
-            if (!response.ok) throw new Error('Failed to login');
-            const userData = await response.json();
-            const userToken = userData.access_token;
-            localStorage.setItem('token', userToken); // Сохраняем токен в localStorage
-            setToken(userToken);
-            setCustomerId(userData.id);
-            setIsAuthenticated(true);
-            fetchCategories();
-            fetchDishes();
-            fetchBalance();
-        } catch (error) {
-            console.error('Login error:', error);
-            setError('Invalid credentials, please try again');
-        }
-    };
-
-    // Логаут
     const handleLogout = async () => {
         try {
             await fetch('http://127.0.0.1:8000/auth/jwt/logout', {
@@ -161,23 +126,21 @@ function MainPage() {
                     'Authorization': `Bearer ${token}`,
                 },
             });
-            localStorage.removeItem('token'); // Удаляем токен из localStorage
+            localStorage.removeItem('token');
             setToken(null);
             setIsAuthenticated(false);
             setDishes([]);
             setCart([]);
             setBalance(0);
         } catch (error) {
-            console.error('Logout failed:', error);
+            console.error('Ошибка при выходе:', error);
         }
     };
 
-    // Обработка изменения категории
-    const handleCategoryChange = (e) => {
-        setSelectedCategory(e.target.value);
+    const handleCategoryChange = (value) => {
+        setSelectedCategory(value);
     };
 
-    // Добавление блюда в корзину
     const addToCart = async (dish) => {
         try {
             const response = await fetch('http://127.0.0.1:8000/api/cart/add-dish', {
@@ -192,143 +155,101 @@ function MainPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to add dish to cart');
+            if (!response.ok) throw new Error('Не удалось добавить блюдо в корзину');
             const updatedCart = await response.json();
             setCart(updatedCart.dishes);
+            message.success(`${dish.name} добавлено в корзину!`); // Уведомление об успешном добавлении
         } catch (error) {
-            console.error('Error adding dish to cart:', error);
-            setError(`Failed to add dish to cart: ${error.message}`);
+            console.error('Ошибка при добавлении блюда в корзину:', error);
+            setError(`Не удалось добавить блюдо в корзину: ${error.message}`);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+        <div className="main-container">
+            <header className="header">
+                <div className="logo-and-balance">
+                    <Link to="/" className="logo">
+                        <img src="src/components/images/logo.png" alt="Logo"/>
+                        <span>FoodExpress</span>
+                    </Link>
+                    {isAuthenticated && (
+                        <div className="balance-section">
+                            <span className="balance">Баланс: {balance} ₽</span>
+                            <Link to="/add_balance">
+                                <Button icon={<PlusCircleOutlined />} className="button-recharge">
+                                    Пополнить
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
+                </div>
+                {isAuthenticated && (
+                    <div className="navigation-section">
+                        <Select
+                            placeholder="Выберите категорию"
+                            value={selectedCategory}
+                            onChange={handleCategoryChange}
+                            className="nav-select"
+                        >
+                            <Select.Option value="">Все</Select.Option>
+                            {categories.map(c => (
+                                <Select.Option key={c.name} value={c.name}>
+                                    {c.name}
+                                </Select.Option>
+                            ))}
+                        </Select>
+                        <Button type="text" icon={<ShoppingCartOutlined />} className="button-cart" onClick={() => navigate('/create_order')}>
+                            Корзина
+                        </Button>
+                        <Button type="text" icon={<LogoutOutlined />} className="button-logout" onClick={handleLogout}>
+                            Выйти
+                        </Button>
+                    </div>
+                )}
+            </header>
+
+            <main className="main-content">
                 {isAuthenticated ? (
                     <>
-                        <h2 className="text-2xl font-bold text-center mb-6">Welcome!</h2>
-                        <button onClick={handleLogout} className="w-full bg-red-500 text-white py-2 rounded-md">
-                            Logout
-                        </button>
-                        <p className="text-center text-gray-700 mb-4">
-                            Balance: <span className="font-semibold">{balance} Руб</span>
-                        </p>
-                        {/* Кнопка для пополнения баланса */}
-                        <Link to={`/add_balance?token=${token}`}>
-                            <button className="w-full bg-yellow-500 text-white py-2 rounded-md mb-4">
-                                Add Balance
-                            </button>
-                        </Link>
-
-
-                        {/* Фильтр по категориям */}
-                        <div className="mt-6 mb-4">
-                            <label htmlFor="category" className="block text-sm font-semibold text-gray-700">
-                                Select Category
-                            </label>
-                            <select
-                                id="category"
-                                className="w-full p-2 border border-gray-300 rounded-md"
-                                value={selectedCategory}
-                                onChange={handleCategoryChange}
-                            >
-                                <option value="">All</option>
-                                {categories.map((category) => (
-                                    <option key={category.id} value={category.name}>
-                                        {category.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Секция с блюдами */}
-                        <h3 className="text-xl font-semibold text-center mt-6 mb-4">Dishes</h3>
-                        {loading ? (
-                            <p className="text-center text-gray-500">Loading dishes...</p>
-                        ) : error ? (
-                            <p className="text-center text-red-500">{error}</p>
-                        ) : (
-                            <ul className="space-y-4">
-                                {dishes.map((dish) => (
-                                    <li key={dish.id} className="border-b py-2">
-                                        <h4 className="font-semibold">{dish.name}</h4>
+                        <h2 className="title">Наши лучшие блюда</h2>
+                        <div className="dishes-grid">
+                            {loading ? (
+                                <div className="col-span-full flex justify-center">
+                                    <Spin size="large"/>
+                                </div>
+                            ) : error ? (
+                                <p className="col-span-full text-red-500 text-center">{error}</p>
+                            ) : (
+                                dishes.map(dish => (
+                                    <div key={dish.id} className="dish-card">
+                                        <img src={dish.image || '/default-dish.jpg'} alt={dish.name}
+                                             className="dish-image"/>
+                                        <h3 className="dish-title">{dish.name}</h3>
                                         <p>{dish.description}</p>
-                                        <p className="text-gray-500">{dish.price} Руб</p>
-                                        <button
+                                        <p className="dish-price">{dish.price} ₽</p>
+                                        <Button
+                                            type="primary"
+                                            icon={<ShoppingCartOutlined />}
+                                            className="mt-4 w-full bg-green-500"
                                             onClick={() => addToCart(dish)}
-                                            className="mt-2 w-full bg-green-500 text-white py-2 rounded-md"
                                         >
-                                            Add to Cart
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        {/* Кнопка для перехода на страницу заказов кухни */}
-                        <Link to={`/kitchen_orders?token=${token}`}>
-                            <button className="w-full bg-blue-500 text-white py-2 rounded-md mt-6">
-                                View Kitchen Orders
-                            </button>
-                        </Link>
-                        <Link to={`/courier/take_order?token=${token}`}>
-                            <button className="w-full bg-blue-500 text-white py-2 rounded-md mt-6">
-                                Заказы курьера
-                            </button>
-                        </Link>
-
-                        {/* Кнопка для перехода на создание заказа */}
-                        <Link to={`/create_order?token=${token}`}>
-                            <button className="w-full bg-purple-500 text-white py-2 rounded-md mt-6">
-                                Create Order
-                            </button>
-                        </Link>
-
-
+                                            В корзину
+                                        </Button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </>
                 ) : (
-                    <>
-                        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
-                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-                        <form onSubmit={handleLogin}>
-                            <div className="mb-4">
-                                <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="mb-6">
-                                <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                                    Password
-                                </label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-500 text-white py-2 rounded-md"
-                            >
-                                Login
-                            </button>
-                        </form>
-                    </>
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Войдите, чтобы продолжить</h2>
+                        <Link to="/login">
+                            <Button className="bg-blue-500 text-white">Перейти к входу</Button>
+                        </Link>
+                    </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 }

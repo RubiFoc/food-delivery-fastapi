@@ -1,0 +1,89 @@
+/* Стили для страницы логина */
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background-color: #f3f4f6;
+}
+
+/* Контейнер для логина */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Изменено на flex-start, чтобы поднять форму */
+    padding-top: 15rem; /* Подняли форму с небольшим отступом сверху */
+    background-color: #f3f4f6;
+}
+
+.login-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card h2 {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #2563eb;
+}
+
+.error-message {
+    color: #dc2626;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Формы */
+.input-field {
+    margin-bottom: 1.5rem;
+}
+
+.input-field label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.input-field input {
+    width: 93.5%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: #333;
+    outline: none;
+}
+
+.input-field input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(38, 131, 255, 0.3);
+}
+
+/* Кнопка */
+.login-button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #2563eb;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+    background-color: #1e40af;
+}
+
+.login-button:focus {
+    outline: none;
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import Cookies from 'js-cookie'; // Import js-cookie
 
 function RegisterAdmin() {
@@ -7,6 +7,18 @@ function RegisterAdmin() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [token, setToken] = useState('');
+
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            setToken(storedToken);
+            handleRegister(storedToken)
+        } else {
+            setError('Token not found');
+        }
+    }, []);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -23,8 +35,9 @@ function RegisterAdmin() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+
                 },
-                credentials: 'include', // Includes cookies in the request
                 body: JSON.stringify({
                     email: email,
                     username: email.split('@')[0],
@@ -80,7 +93,8 @@ function RegisterAdmin() {
                         />
                     </div>
                     <div className="mb-4">
-                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700">Confirm Password</label>
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700">Confirm
+                            Password</label>
                         <input
                             type="password"
                             id="confirmPassword"

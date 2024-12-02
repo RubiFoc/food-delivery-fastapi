@@ -1,45 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, message, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import 'tailwindcss/tailwind.css';
+import './styles/Order.css'; // Подключаем стили
 
 function OrderPage() {
+    const [token, setToken] = useState(localStorage.getItem('token'));
     const [cart, setCart] = useState([]);  // Убедитесь, что cart всегда массив
     const [totalPrice, setTotalPrice] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem('token'));
     const navigate = useNavigate();
+    const [balance, setBalance] = useState(0);
 
     // Проверка аутентификации
     useEffect(() => {
         const checkAuth = async () => {
-            if (!token) {
-                setIsAuthenticated(false);
-                return;
-            }
-            try {
-                const response = await fetch('http://127.0.0.1:8000/auth/me', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-
-                if (response.ok) {
-                    setIsAuthenticated(true);
-                    fetchCart(); // Получение корзины при успешной аутентификации
-                } else {
-                    setIsAuthenticated(false);
-                }
-            } catch (error) {
-                console.error('Authentication check failed:', error);
-                setIsAuthenticated(false);
+            const storedToken = localStorage.getItem('token');
+            if (storedToken) {
+                setToken(storedToken);
+                fetchCart(storedToken);  // Получаем данные корзины
+                fetchBalance(storedToken);  // Получаем баланс
+            } else {
+                setError('Token not found');
             }
         };
         checkAuth();
-    }, [token]);
+    }, []);
 
     // Функция для получения информации о блюде по dish_id
     const fetchDishDetails = async (dish_id) => {
@@ -57,7 +43,7 @@ function OrderPage() {
     };
 
     // Функция для получения корзины
-    const fetchCart = async () => {
+    const fetchCart = async (token) => {
         setLoading(true);
         try {
             const response = await fetch('http://127.0.0.1:8000/api/cart', {
@@ -89,6 +75,45 @@ function OrderPage() {
         }
     };
 
+    // Функция для получения баланса
+    const fetchBalance = async (token) => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/auth/user/balance', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setBalance(data.balance);
+            } else {
+                setBalance(0);
+            }
+        } catch (error) {
+            console.error('Ошибка при получении баланса:', error);
+            setError('Не удалось получить баланс');
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await fetch('http://127.0.0.1:8000/auth/jwt/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            localStorage.removeItem('token');
+            setToken(null);
+            setCart([]);
+            setBalance(0);
+        } catch (error) {
+            console.error('Ошибка при выходе:', error);
+        }
+    };
+
     // Функция для расчета общей стоимости
     const calculateTotal = (dishes) => {
         const total = dishes.reduce((sum, dish) => sum + dish.price * dish.quantity, 0);
@@ -105,11 +130,10 @@ function OrderPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
-                body: JSON.stringify({ dishes: cart }),
+                body: JSON.stringify({dishes: cart}),
             });
 
             if (response.ok) {
-                const orderData = await response.json();
                 navigate(`/`); // Переход на страницу подтверждения заказа
             } else {
                 throw new Error('Failed to create order');
@@ -123,12 +147,29 @@ function OrderPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="max-w-4xl w-full p-6">
-                <h1 className="text-3xl font-bold text-center mb-8">Ваш заказ</h1>
+        <div className="main-container">
+            <header className="header">
+                <div className="logo-and-balance">
+                    <a href="/" className="logo">
+                        <img src="src/components/images/logo.png" alt="Logo"/>
+                        <span>My Food App</span>
+                    </a>
+                    {token && (
+                        <div className="balance-section">
+                            <span className="balance">Баланс: {balance} ₽</span>
+                        </div>
+                    )}
+                </div>
+                <button className="back-to-home" onClick={() => navigate('/')}>
+                    На главную
+                </button>
+            </header>
+
+            <div className="main-content">
+                <h1 className="title">Ваш заказ</h1>
                 {loading ? (
                     <div className="text-center">
-                        <Spin size="large" />
+                        <Spin size="large"/>
                         <p>Загрузка...</p>
                     </div>
                 ) : (
@@ -137,10 +178,10 @@ function OrderPage() {
                             <p className="text-center text-gray-500">Ваш заказ пуст</p>
                         ) : (
                             <div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div className="dishes-grid">
                                     {cart.map((item) => (
-                                        <Card key={item.dish_id} className="shadow-md">
-                                            <p className="text-lg font-semibold">{item.dish_name}</p>
+                                        <Card key={item.dish_id} className="dish-card">
+                                            <p className="dish-title">{item.dish_name}</p>
                                             <p>Количество: {item.quantity}</p>
                                             <p>Цена за штуку: {item.price} Р</p>
                                             <p>Сумма: {item.quantity * item.price} Р</p>
@@ -161,11 +202,7 @@ function OrderPage() {
                         </div>
                     </div>
                 )}
-                {error && (
-                    <div className="text-red-500 text-center mt-4">
-                        <p>{error}</p>
-                    </div>
-                )}
+                {error && <p className="text-center text-red-500">{error}</p>}
             </div>
         </div>
     );

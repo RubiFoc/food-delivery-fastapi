@@ -10,6 +10,7 @@ import KitchenOrders from "./components/KitchenOrders.jsx";
 import CourierPage from "./components/CourierPage.jsx";
 import OrderPage from "./components/OrderPage.jsx";
 import AddBalance from "./components/AddBalance.jsx";
+import './index.css'
 
 const App = () => {
     const [dishes, setDishes] = useState([]);
