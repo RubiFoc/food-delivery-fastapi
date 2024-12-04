@@ -15,8 +15,7 @@ from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociat
     OrderStatus, User
 from schemas.cart import CartDishAddRequest
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
-from schemas.dish import AddDishSchema
-from schemas.order import DetailedOrderSchema
+
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -131,11 +130,9 @@ async def add_dish(
         image: UploadFile = File(...),
         session: AsyncSession = Depends(get_async_session)
 ):
-    # Сохраняем изображение
     from utils.dish import save_image
     image_path = await save_image(image)
 
-    # Получаем категорию
     category_query = await session.execute(select(DishCategory).where(DishCategory.id == category_id))
     category = category_query.scalars().first()
 
@@ -152,7 +149,7 @@ async def add_dish(
         profit=profit,
         time_of_preparing=time_of_preparing,
         restaurant_id=1,
-        image_path=image_path  # Сохраняем путь к изображению
+        image_path=image_path
     )
 
     session.add(new_dish)
@@ -231,14 +228,12 @@ async def update_dish(
 
 @router.get("/dishes/{dish_id}", response_model=DishSchema)
 async def get_dish_by_id(dish_id: int, session: AsyncSession = Depends(get_async_session)):
-    # Выполнение запроса на поиск блюда по ID
     result = await session.execute(select(Dish).where(Dish.id == dish_id))
     dish = result.scalars().first()
 
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
 
-    # Возвращаем данные блюда в соответствии с схемой DishSchema
     return DishSchema.from_orm(dish)
 
 
@@ -247,46 +242,40 @@ async def get_cart(
         current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    # Получаем корзину покупателя
     cart_query = await session.execute(
         select(Cart)
-        .where(Cart.customer_id == current_user.id)  # Используем current_user.id для идентификации покупателя
-        .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))  # Загружаем связанные блюда
+        .where(Cart.customer_id == current_user.id)
+        .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))
     )
     cart = cart_query.scalars().first()
 
     if not cart:
         raise HTTPException(status_code=404, detail="Cart not found")
 
-    # Возвращаем данные о корзине
     return CartSchema.from_orm(cart)
 
 
 @router.post("/cart/add-dish", response_model=CartSchema)
 async def add_dish_to_cart(
-        request: CartDishAddRequest,  # Используем схему для запроса
+        request: CartDishAddRequest,
         session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_user)  # Получаем текущего пользователя
+        current_user: User = Depends(get_current_user)
 ):
-    # Проверка существования пользователя
     if not current_user:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # Проверка существования блюда
     dish = await session.get(Dish, request.dish_id)
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
 
-    # Поиск корзины или создание новой
     cart_query = await session.execute(select(Cart).where(Cart.customer_id == current_user.id))
     cart = cart_query.scalars().first()
 
     if not cart:
         cart = Cart(customer_id=current_user.id)
         session.add(cart)
-        await session.flush()  # чтобы получить id для нового объекта cart
+        await session.flush()
 
-    # Добавление или обновление блюда в корзине
     association_query = await session.execute(
         select(CartDishAssociation)
         .where(CartDishAssociation.cart_id == cart.id, CartDishAssociation.dish_id == request.dish_id)
@@ -294,27 +283,25 @@ async def add_dish_to_cart(
     association = association_query.scalars().first()
 
     if association:
-        association.quantity += request.quantity  # обновляем количество
+        association.quantity += request.quantity
     else:
         new_association = CartDishAssociation(cart_id=cart.id, dish_id=request.dish_id, quantity=request.quantity)
         session.add(new_association)
 
-    # Сохранение изменений
     await session.commit()
-    await session.refresh(cart, ["dishes"])  # Загружаем связанные данные для избежания ленивой загрузки
+    await session.refresh(cart, ["dishes"])
 
     return CartSchema.from_orm(cart)
 
 
 @router.post("/cart/create-order", response_model=OrderSchema)
 async def create_order_from_cart(
-        current_user: User = Depends(get_current_user),  # Получаем текущего пользователя
+        current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    # Получаем корзину покупателя
     cart_query = await session.execute(
         select(Cart)
-        .where(Cart.customer_id == current_user.id)  # Используем current_user.id вместо customer_id из URL
+        .where(Cart.customer_id == current_user.id)
         .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))
     )
     cart = cart_query.scalars().first()
@@ -322,43 +309,36 @@ async def create_order_from_cart(
     if not cart or not cart.dishes:
         raise HTTPException(status_code=404, detail="Cart is empty or not found")
 
-    # Вычисляем общую стоимость и вес заказа
     total_price = sum(dish.quantity * dish.dish.price for dish in cart.dishes)
     total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
 
-    # Получаем информацию о покупателе
     customer_query = await session.execute(select(Customer).filter(Customer.id == current_user.id))
-    customer = customer_query.scalars().first()  # Извлекаем сам объект Customer
+    customer = customer_query.scalars().first()
 
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # Проверяем баланс покупателя
     if customer.balance < total_price:
         raise HTTPException(status_code=400, detail="Insufficient balance to complete the order")
 
-    # Списываем стоимость заказа с баланса покупателя
     customer.balance -= total_price
-    session.add(customer)  # Обновляем запись в сессии
+    session.add(customer)
 
-    # Получаем местоположение покупателя
     location = customer.location
     if not location:
         raise HTTPException(status_code=404, detail="Customer location not found")
 
-    # Создаём новый заказ
     new_order = Order(
         price=total_price,
         weight=total_weight,
         time_of_creation=datetime.now(),
-        customer_id=current_user.id,  # Используем current_user.id вместо customer_id
+        customer_id=current_user.id,
         location=location,
         restaurant_id=1
     )
     session.add(new_order)
-    await session.flush()  # Генерируем ID заказа
+    await session.flush()
 
-    # Добавляем блюда из корзины в заказ
     for cart_dish in cart.dishes:
         order_dish = OrderDishAssociation(
             order_id=new_order.id,
@@ -367,15 +347,13 @@ async def create_order_from_cart(
         )
         session.add(order_dish)
 
-    # Добавляем статус заказа
     order_status = OrderStatus(order_id=new_order.id)
     session.add(order_status)
 
-    # Очищаем корзину покупателя
     for cart_dish in cart.dishes:
         await session.delete(cart_dish)
 
-    await session.commit()  # Сохраняем все изменения
+    await session.commit()
     await session.refresh(new_order)
 
     return OrderSchema.from_orm(new_order)
@@ -384,10 +362,9 @@ async def create_order_from_cart(
 @router.post("/customer/update_location", summary="Обновить местоположение пользователя")
 async def update_customer_location(
         address: str,
-        current_user: User = Depends(get_current_user),  # Получаем текущего пользователя
+        current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    # Добавляем "Минск" к адресу для уточнения
     address = "Минск, " + address
     base_url = "https://geocode-maps.yandex.ru/1.x/"
     params = {
@@ -404,54 +381,27 @@ async def update_customer_location(
 
     data = response.json()
     try:
-        # Проверяем наличие ответа с координатами
         geo_objects = data["response"]["GeoObjectCollection"]["featureMember"]
         if not geo_objects:
             raise HTTPException(status_code=404, detail="Не найдено местоположение для указанного адреса")
 
-        # Печатаем все координаты для диагностики, можно убрать в продакшн
         for geo_object in geo_objects:
             coordinates_str = geo_object["GeoObject"]["Point"]["pos"]
-            print(f"Координаты: {coordinates_str}")  # Для дебага
 
-        # Берём первые доступные координаты, но можно добавить логику выбора наиболее точного
         geo_object = geo_objects[0]["GeoObject"]
         coordinates_str = geo_object["Point"]["pos"]
         longitude, latitude = map(float, coordinates_str.split(" "))
 
-        # Получаем пользователя из базы данных с использованием AsyncSession
         result = await session.execute(select(Customer).filter(Customer.id == current_user.id))
         customer = result.scalar_one_or_none()
 
         if not customer:
             raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-        # Обновляем местоположение пользователя
         customer.location = f"{latitude}, {longitude}"
 
-        # Сохраняем изменения в базе данных
         await session.commit()
         return {"customer_id": current_user.id, "location": customer.location}
 
     except (IndexError, KeyError):
         raise HTTPException(status_code=404, detail="Не удалось найти координаты для указанного адреса")
-
-# @router.get("/orders/detailed", response_model=List[DetailedOrderSchema])
-# async def get_detailed_orders(
-#     current_user: User = Depends(get_current_user),
-#     session: AsyncSession = Depends(get_async_session)
-# ):
-#     result = await session.execute(
-#         select(Order)
-#         .where(Order.customer_id == current_user.id)
-#         .options(
-#             joinedload(Order.dishes).joinedload(OrderDishAssociation.dish),
-#             joinedload(Order.customer_id)  # Для получения информации о заказчике
-#         )
-#     )
-#     orders = result.scalars().all()
-#
-#     if not orders:
-#         raise HTTPException(status_code=404, detail="No orders found")
-#
-#     return [DetailedOrderSchema.from_orm(order) for order in orders]

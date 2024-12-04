@@ -2,12 +2,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 60vh;  /* Чтобы центрировать форму по вертикали */
+    min-height: 60vh;
 }
 
 .content {
     width: 100%;
-    max-width: 500px;  /* Ограничиваем максимальную ширину формы */
+    max-width: 500px;
     padding: 20px;
     background-color: #f9f9f9;
     border-radius: 8px;
@@ -18,13 +18,13 @@
     font-size: 1.5rem;
     font-weight: bold;
     color: #333;
-    margin-bottom: 15px;  /* Отступ под заголовком */
+    margin-bottom: 15px;
     text-align: center;
 }
 
 
 .ant-input {
-    padding: 12px;  /* Увеличиваем внутренние отступы в инпуте */
+    padding: 12px;
     font-size: 1rem;
     border-radius: 6px;
     width: 100%;
@@ -35,7 +35,7 @@
 }
 
 button {
-    width: 100%;  /* Кнопка будет на всю ширину */
+    width: 100%;
     padding: 12px;
     font-size: 1.1rem;
     border-radius: 6px;

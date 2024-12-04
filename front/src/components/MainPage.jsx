@@ -3,7 +3,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {Button, Select, Spin, message} from 'antd';
 import {LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined} from '@ant-design/icons';
 import Header from './Header';
-import './styles/MainPage.css';  // Импорт CSS-файла
+import './styles/MainPage.css';
 
 function MainPage() {
     const [token, setToken] = useState(localStorage.getItem('token'));

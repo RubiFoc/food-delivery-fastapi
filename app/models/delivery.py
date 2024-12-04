@@ -84,7 +84,7 @@ class KitchenWorker(Base):
 
 class Admin(Base):
     __tablename__ = 'admin'
-    id = Column(Integer, ForeignKey('user.id'), primary_key=True)  # ForeignKey links to user table
+    id = Column(Integer, ForeignKey('user.id'), primary_key=True)
     role_id = Column(Integer, ForeignKey("role.id"), default=4)
     user = relationship("User", back_populates="admin")
     role = relationship("Role", back_populates="admins")
@@ -119,7 +119,7 @@ class Dish(Base):
     number_of_marks = Column(Integer, default=0, nullable=False)
     profit = Column(Float, nullable=False)
     time_of_preparing = Column(Float, nullable=False)
-    image_path = Column(String, nullable=True)  # Новое поле для хранения пути к картинке
+    image_path = Column(String, nullable=True)
 
     category = relationship("DishCategory", back_populates="dishes")
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)

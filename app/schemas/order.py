@@ -33,14 +33,14 @@ class DetailedOrderSchema(BaseModel):
     price: float
     weight: float
     location: str
-    dishes: List[DishSchema]  # Используем уже существующую схему DishSchema
+    dishes: List[DishSchema]
 
     class Config:
         orm_mode = True
 
 
 class OrderDishSchema(BaseModel):
-    dish: DishSchema  # Используем схему блюда
+    dish: DishSchema
     quantity: int
 
     class Config:
@@ -52,7 +52,7 @@ class OrderSchema(BaseModel):
     id: int
     price: float
     time_of_creation: datetime
-    dishes: List[OrderDishSchema]  # Вложенный список блюд
+    dishes: List[OrderDishSchema]
 
     class Config:
         orm_mode = True

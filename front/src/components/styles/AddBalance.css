@@ -1,17 +1,14 @@
-/* Общие стили */
 body {
     margin: 0;
     font-family: 'Arial', sans-serif;
 }
 
-/* Основной контейнер */
 .main-container {
     min-height: 100vh;
     background-color: #f3f4f6;
     padding-top: 6rem;
 }
 
-/* Хедер */
 .header {
     position: fixed;
     top: 0;
@@ -26,7 +23,6 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Логотип и баланс */
 .logo-and-balance {
     display: flex;
     align-items: center;
@@ -60,7 +56,6 @@ body {
     margin-right: 10px;
 }
 
-/* Кнопки */
 .button-logout {
     background-color: transparent;
     color: white;
@@ -85,7 +80,6 @@ body {
     background-color: #fbbf24;
 }
 
-/* Навигация */
 .navigation-section {
     display: flex;
     align-items: center;
@@ -93,7 +87,6 @@ body {
     margin-right: 50px;
 }
 
-/* Выбор категории */
 .nav-select {
     background-color: white;
     border-radius: 5px;
@@ -101,21 +94,18 @@ body {
     margin-right: 1rem;
 }
 
-/* Основное содержимое */
 .main-content {
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Заголовок */
 .title {
     text-align: center;
     margin-bottom: 2rem;
     color: #1f2937;
 }
 
-/* Карточка добавления баланса */
 .bg-white {
     background-color: white;
     padding: 2rem;
@@ -171,7 +161,6 @@ button:hover {
     background-color: #fbbf24;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
     .header {
         flex-direction: column;

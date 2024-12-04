@@ -63,9 +63,9 @@ class OrderSchema(BaseModel):
     time_of_delivery: Optional[datetime] = None
     restaurant_id: int
     location: str
-    courier_id: Optional[int] = None  # Сделано необязательным
-    kitchen_worker_id: Optional[int] = None  # Сделано необязательным
-    customer_id: Optional[int] = None  # Сделано необязательным
+    courier_id: Optional[int] = None
+    kitchen_worker_id: Optional[int] = None
+    customer_id: Optional[int] = None
 
     class Config:
         orm_mode = True
@@ -91,7 +91,6 @@ class CartDishSchema(BaseModel):
         from_attributes = True
 
 
-# Схема корзины
 class CartSchema(BaseModel):
     id: int
     customer_id: int

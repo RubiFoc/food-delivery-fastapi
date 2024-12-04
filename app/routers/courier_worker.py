@@ -11,7 +11,6 @@ fastapi_users_courier_worker = FastAPIUsers(
     [auth_backend],
 )
 
-# Регистрация курьеров и работников кухни
 courier_worker_router.include_router(
     fastapi_users_courier_worker.get_register_router(UserRead, UserCreate),
     prefix="/register",

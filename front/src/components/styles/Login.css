@@ -1,17 +1,15 @@
-/* Стили для страницы логина */
 body {
     margin: 0;
     font-family: 'Arial', sans-serif;
     background-color: #f3f4f6;
 }
 
-/* Контейнер для логина */
 .login-container {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Изменено на flex-start, чтобы поднять форму */
-    padding-top: 15rem; /* Подняли форму с небольшим отступом сверху */
+    align-items: flex-start;
+    padding-top: 15rem;
     background-color: #f3f4f6;
 }
 
@@ -38,7 +36,6 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Формы */
 .input-field {
     margin-bottom: 1.5rem;
 }
@@ -66,7 +63,6 @@ body {
     box-shadow: 0 0 0 2px rgba(38, 131, 255, 0.3);
 }
 
-/* Кнопка */
 .login-button {
     width: 100%;
     padding: 0.75rem;

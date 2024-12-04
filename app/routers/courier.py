@@ -17,13 +17,11 @@ from schemas.order import OrderInfoSchema
 courier_router = APIRouter(prefix="/courier", tags=["couriers"])
 
 
-# Маршрут для получения заказов, которые не доставлены и не назначен курьер
 @courier_router.get("/orders/not_delivered", response_model=list[OrderStatusSchema])
 async def get_not_delivered_orders(
         session: AsyncSession = Depends(get_async_session),
         current_courier: Courier = Depends(get_current_courier)
 ):
-    # Получаем все заказы, которые еще не доставлены и не имеют назначенного курьера
     result = await session.execute(
         select(Order, OrderStatus)
         .join(OrderStatus)
@@ -31,17 +29,14 @@ async def get_not_delivered_orders(
         .options(selectinload(Order.status))
     )
 
-    # Извлекаем все заказы
     orders = result.scalars().all()
 
-    # Если заказы не найдены, выбрасываем ошибку
     if not orders:
         raise HTTPException(status_code=404, detail="No orders found that are not delivered")
 
-    # Преобразуем данные в список схем OrderStatusSchema
     order_status_list = [
         OrderStatusSchema(
-            order_id=order.id,  # Здесь используем id заказа
+            order_id=order.id,
             is_prepared=order.status.is_prepared,
             is_delivered=order.status.is_delivered
         )
@@ -70,7 +65,6 @@ async def take_order(
         session: AsyncSession = Depends(get_async_session),
         current_courier: Courier = Depends(get_current_courier)
 ):
-    # Получаем заказ с предзагрузкой связанных блюд и статуса
     result = await session.execute(
         select(Order)
         .where(Order.id == order_id)
@@ -78,7 +72,6 @@ async def take_order(
     )
     order: Order = result.scalars().first()
 
-    # Проверка существования и статуса заказа
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status.is_delivered:
@@ -88,33 +81,26 @@ async def take_order(
     if not order.status.is_prepared:
         raise HTTPException(status_code=400, detail="Order is not prepared yet")
 
-    # Получаем координаты курьера и заказчика
     courier_coords = await get_coordinates(courier_location)
     customer_coords = tuple(map(float, order.location.split(",")))
 
-    # Расчет расстояния и времени на доставку
     distance_km = geodesic(courier_coords, customer_coords).kilometers
     delivery_time_minutes = distance_km * 0.86  # Допустимая скорость — 70 км/ч (~0.86 мин/км)
 
-    # Проверяем, что блюда в заказе существуют и есть время на приготовление
     if not order.dishes:
         raise HTTPException(status_code=400, detail="No dishes in the order")
 
-    # Получаем максимальное время приготовления блюда
     max_preparing_time = 20
-    # Общее расчетное время доставки
     expected_time_of_delivery = (
             order.time_of_creation +
             timedelta(minutes=max_preparing_time) +
             timedelta(minutes=delivery_time_minutes)
     )
 
-    # Обновляем курьера с его локацией
-    current_courier.location = courier_location  # Обновляем локацию курьера
-    order.courier_id = current_courier.id  # Назначаем курьера на заказ
-    order.expected_time_of_delivery = expected_time_of_delivery  # Сохраняем время ожидания доставки
+    current_courier.location = courier_location
+    order.courier_id = current_courier.id
+    order.expected_time_of_delivery = expected_time_of_delivery
 
-    # Сохраняем изменения
     session.add(current_courier)
     session.add(order)
     await session.commit()
@@ -122,50 +108,42 @@ async def take_order(
     return {"message": "Order taken successfully", "expected_time_of_delivery": expected_time_of_delivery}
 
 
-# Маршрут для уведомления о доставке заказа курьером
 @courier_router.put("/{order_id}/deliver", response_model=OrderStatusSchema)
 async def deliver_order(
         order_id: int,
         session: AsyncSession = Depends(get_async_session),
         current_courier: Courier = Depends(get_current_courier)
 ):
-    # Получаем заказ по ID
     result = await session.execute(
         select(Order).where(Order.id == order_id).options(selectinload(Order.status))
     )
     order = result.scalar_one_or_none()
 
-    # Если заказ не найден, выбрасываем ошибку
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Проверяем, что заказ был взят курьером
     if order.courier_id != current_courier.id:
         raise HTTPException(status_code=400, detail="You are not the assigned courier for this order")
 
-    # Обновляем статус заказа на доставленный
     order_status_record = await session.execute(
         select(OrderStatus).where(OrderStatus.order_id == order_id)
     )
     order_status_record = order_status_record.scalar_one_or_none()
 
     if order_status_record:
-        order_status_record.is_delivered = True  # Устанавливаем статус доставки на True
-        order.time_of_delivery = datetime.now()  # Заполняем время доставки
+        order_status_record.is_delivered = True
+        order.time_of_delivery = datetime.now()
     else:
-        # Если статус заказа не существует, создаем новый
         order_status_record = OrderStatus(
             order_id=order_id,
-            is_prepared=True,  # Предположим, что заказ уже был подготовлен
-            is_delivered=True  # Устанавливаем статус доставки на True
+            is_prepared=True,
+            is_delivered=True
         )
         session.add(order_status_record)
-        order.time_of_delivery = datetime.now()  # Заполняем время доставки
+        order.time_of_delivery = datetime.now()
 
-    # Сохраняем изменения в базе данных
     await session.commit()
 
-    # Возвращаем обновленный статус заказа
     return OrderStatusSchema(
         order_id=order.id,
         is_prepared=order_status_record.is_prepared,
@@ -178,7 +156,6 @@ async def get_assigned_orders(
         session: AsyncSession = Depends(get_async_session),
         current_courier: Courier = Depends(get_current_courier)
 ):
-    # Получаем заказы, назначенные текущему курьеру, которые еще не доставлены
     result = await session.execute(
         select(Order)
         .where(Order.courier_id == current_courier.id)
@@ -190,7 +167,6 @@ async def get_assigned_orders(
     if not orders:
         raise HTTPException(status_code=404, detail="No assigned orders found")
 
-    # Формируем список схем
     order_status_list = [
         OrderStatusSchema(
             order_id=order.id,
@@ -215,11 +191,9 @@ async def get_order_info(
     )
     order = result.scalar_one_or_none()
 
-    # Если заказ не найден, выбрасываем ошибку
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Возвращаем информацию о заказе
     return OrderInfoSchema(
         cost=order.price,
         creation_date=order.time_of_creation,

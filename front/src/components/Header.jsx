@@ -3,7 +3,7 @@ import { Button, Select } from 'antd';
 import { LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
 import './styles/header.css';
-import logo from './images/logo.png'; // Импорт логотипа
+import logo from './images/logo.png';
 
 const Header = ({ isAuthenticated, balance, categories, selectedCategory, onCategoryChange, handleLogout }) => {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ const Header = ({ isAuthenticated, balance, categories, selectedCategory, onCate
         <header className="header">
             <div className="logo-and-balance">
                 <Link to="/" className="logo">
-                    <img src={logo} alt="Logo" /> {/* Используем импортированный логотип */}
+                    <img src={logo} alt="Logo" /> {}
                     <span>FoodExpress</span>
                 </Link>
                 {isAuthenticated && (
@@ -44,7 +44,7 @@ const Header = ({ isAuthenticated, balance, categories, selectedCategory, onCate
                         Корзина
                     </Button>
 
-                    {/* Ссылка на обновление локации */}
+                    {}
                     <Link to="/customer/location">
                         <Button type="text" icon={<EnvironmentOutlined />} className="button-location">
                             Обновить локацию

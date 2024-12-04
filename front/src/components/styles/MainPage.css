@@ -3,51 +3,46 @@ body {
     font-family: 'Arial', sans-serif;
 }
 
-/* Основной контейнер */
 .main-container {
     min-height: 100vh;
     background-color: #f3f4f6;
     padding-top: 6rem;
 }
 
-/* Основное содержимое */
 .main-content {
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Заголовок */
 .title {
     text-align: center;
     margin-bottom: 2rem;
     color: #1f2937;
 }
 
-/* Сетка блюд */
 .dishes-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 колонки */
-    gap: 2rem; /* Отступы между элементами */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
     margin-top: 2rem;
 }
 
-/* Адаптация сетки для меньших экранов */
 @media (max-width: 1200px) {
     .dishes-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 колонки для экранов до 1200px */
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 900px) {
     .dishes-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 колонки для экранов до 900px */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 600px) {
     .dishes-grid {
-        grid-template-columns: 1fr; /* 1 колонка для экранов до 600px */
+        grid-template-columns: 1fr;
     }
 }
 
@@ -72,7 +67,6 @@ body {
     border-radius: 0.5rem;
 }
 
-/* Название блюда */
 .dish-title {
     font-size: 1.25rem;
     margin: 0.5rem 0;
@@ -84,7 +78,6 @@ body {
     color: #4CAF50;
 }
 
-/* Кнопка "Добавить в корзину" */
 .mt-4 {
     margin-top: 1rem;
 }
@@ -103,7 +96,6 @@ body {
     background-color: #16a34a;
 }
 
-/* Стилевые настройки для ошибок и загрузки */
 .spinner {
     text-align: center;
     margin-top: 2rem;

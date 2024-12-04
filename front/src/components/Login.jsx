@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './styles/Login.css'; // Подключаем стили
+import './styles/Login.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -25,10 +25,8 @@ function Login() {
         const data = await response.json();
         const token = data.access_token;
 
-        // Сохраняем Bearer токен в localStorage или в state
         localStorage.setItem('token', token);
 
-        // Логин успешен, перенаправляем пользователя
         window.location.href = '/';
       } else {
         throw new Error('Failed to login');

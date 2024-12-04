@@ -28,7 +28,6 @@ admin_router.include_router(
 )
 
 
-# Регистрировать администратора
 @admin_router.post("/register")
 async def register_admin(
         user_create: UserCreate,
@@ -42,7 +41,6 @@ async def register_admin(
     return user
 
 
-# Управление пользователями
 @admin_router.get("/users")
 async def get_users(
         session: AsyncSession = Depends(get_async_session)
@@ -102,7 +100,6 @@ async def delete_user(
     return {"message": f"User {user.username} deleted successfully."}
 
 
-# Управление ресторанами
 @admin_router.get("/restaurants")
 async def get_restaurants(
         session: AsyncSession = Depends(get_async_session)
@@ -162,6 +159,7 @@ async def delete_restaurant(
     await session.delete(restaurant)
     await session.commit()
     return {"message": f"Restaurant {restaurant.name} deleted successfully."}
+
 
 @admin_router.get("/dishes")
 async def get_dishes(
@@ -223,7 +221,7 @@ async def delete_dish(
     await session.commit()
     return {"message": f"Dish {dish.name} deleted successfully."}
 
-# Получение всех заказов
+
 @admin_router.get("/orders")
 async def get_orders(
         session: AsyncSession = Depends(get_async_session)
@@ -233,7 +231,6 @@ async def get_orders(
     return orders
 
 
-# Создание нового заказа
 @admin_router.post("/order")
 async def create_order(
         order_create: OrderCreate,
@@ -248,7 +245,6 @@ async def create_order(
     return {"message": "Order created successfully."}
 
 
-# Обновление заказа
 @admin_router.put("/order/{order_id}")
 async def update_order(
         order_id: int,
@@ -270,7 +266,6 @@ async def update_order(
     return {"message": f"Order {order.id} updated successfully."}
 
 
-# Удаление заказа
 @admin_router.delete("/order/{order_id}")
 async def delete_order(
         order_id: int,
@@ -288,7 +283,6 @@ async def delete_order(
     return {"message": f"Order {order.id} deleted successfully."}
 
 
-# Получение всех элементов в корзине
 @admin_router.get("/carts")
 async def get_carts(
         session: AsyncSession = Depends(get_async_session)
@@ -298,7 +292,6 @@ async def get_carts(
     return carts
 
 
-# Создание нового элемента в корзине
 @admin_router.post("/cart")
 async def create_cart(
         cart_create: CartCreate,
@@ -313,7 +306,6 @@ async def create_cart(
     return {"message": "Cart item created successfully."}
 
 
-# Обновление элемента в корзине
 @admin_router.put("/cart/{cart_id}")
 async def update_cart(
         cart_id: int,
@@ -335,7 +327,6 @@ async def update_cart(
     return {"message": f"Cart item {cart_item.id} updated successfully."}
 
 
-# Удаление элемента из корзины
 @admin_router.delete("/cart/{cart_id}")
 async def delete_cart(
         cart_id: int,
@@ -351,4 +342,3 @@ async def delete_cart(
     await session.delete(cart_item)
     await session.commit()
     return {"message": f"Cart item {cart_item.id} deleted successfully."}
-

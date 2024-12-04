@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
-import './styles/AddBalance.css';  // Импорт CSS-файла
-import Header from './Header';  // Импорт компонента Header
+import './styles/AddBalance.css';
+import Header from './Header';
 
 function AddBalance() {
     const location = useLocation();
@@ -16,7 +16,6 @@ function AddBalance() {
 
 
     useEffect(() => {
-        // Проверка наличия токена в localStorage
         const storedToken = localStorage.getItem('token');
         if (storedToken) {
             setToken(storedToken);
@@ -24,12 +23,10 @@ function AddBalance() {
             fetchBalance();
             fetchCategories();
         } else {
-            // Если токен не найден в localStorage, проверяем параметры URL
             const params = new URLSearchParams(location.search);
             const tokenFromUrl = params.get('token');
             if (tokenFromUrl) {
                 setToken(tokenFromUrl);
-                // Сохраняем токен в localStorage для последующих перезагрузок
                 localStorage.setItem('token', tokenFromUrl);
                 setIsAuthenticated(true);
                 fetchBalance();
@@ -80,9 +77,8 @@ function AddBalance() {
     };
 
     const handleBalanceUpdate = async (e) => {
-        e.preventDefault(); // Останавливаем отправку формы
+        e.preventDefault();
 
-        // Проверка, что введенная сумма — это число больше нуля
         const parsedAmount = parseFloat(amount);
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             alert('Please enter a valid balance amount');
@@ -96,7 +92,7 @@ function AddBalance() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({amount: parsedAmount}), // Отправляем parsedAmount
+                body: JSON.stringify({amount: parsedAmount}),
             });
 
             if (response.ok) {

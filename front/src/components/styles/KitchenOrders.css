@@ -31,7 +31,7 @@
 
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Три столбца */
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
 }
 

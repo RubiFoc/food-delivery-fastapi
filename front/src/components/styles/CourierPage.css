@@ -1,16 +1,16 @@
 .courier-page {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Центрируем элементы по горизонтали */
-  justify-content: center; /* Центрируем элементы по вертикали */
+  align-items: center;
+  justify-content: center;
   padding: 20px;
-  min-height: 100vh; /* Обеспечиваем, чтобы страница занимала всю высоту */
-  background-color: #f0f8ff; /* Легкий фон с синим оттенком */
+  min-height: 100vh;
+  background-color: #f0f8ff;
 }
 
 .courier-header {
   width: 100%;
-  text-align: center; /* Центрируем текст заголовка */
+  text-align: center;
   margin-bottom: 20px;
 }
 
@@ -19,62 +19,62 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Центрируем элементы внутри */
-  justify-content: center; /* Центрируем блок по вертикали */
+  align-items: center;
+  justify-content: center;
 }
 
 .courier-location label {
   font-size: 18px;
-  color: #1e3a8a; /* Темно-синий цвет для метки */
+  color: #1e3a8a;
   margin-bottom: 5px;
-  text-align: center; /* Центрируем метку */
+  text-align: center;
 }
 
 .courier-location input {
   width: 20%;
   padding: 10px;
   font-size: 16px;
-  border: 2px solid #1e3a8a; /* Синий цвет для рамки */
+  border: 2px solid #1e3a8a;
   border-radius: 8px;
   outline: none;
   box-sizing: border-box;
-  text-align: center; /* Центрируем текст внутри поля ввода */
+  text-align: center;
 }
 
 .courier-location input:focus {
-  border-color: #3b82f6; /* Светлый синий цвет при фокусе */
-  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); /* Легкий синий оттенок при фокусе */
+  border-color: #3b82f6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
 }
 
 .orders-container {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 30px; /* Увеличиваем пространство между секциями */
-  align-items: center; /* Центрируем секции */
+  gap: 30px;
+  align-items: center;
 }
 
 .orders-section {
   width: 100%;
-  max-width: 1200px; /* Максимальная ширина для секций */
+  max-width: 1200px;
 }
 
 .orders-section h2 {
   font-size: 24px;
   margin-bottom: 10px;
-  color: #1e3a8a; /* Темно-синий цвет для заголовков */
+  color: #1e3a8a;
 }
 
 .orders-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  justify-content: center; /* Центрируем элементы в сетке */
+  justify-content: center;
 }
 
 .order-card {
   width: 220px;
-  border: 1px solid #1e3a8a; /* Граница с синим оттенком */
+  border: 1px solid #1e3a8a;
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -85,7 +85,7 @@
 .action-btn {
   width: 100%;
   margin-top: 10px;
-  background-color: #3b82f6; /* Синий фон для кнопок */
+  background-color: #3b82f6;
   color: white;
   border: none;
   padding: 10px;
@@ -94,7 +94,7 @@
 }
 
 .action-btn:hover {
-  background-color: #2563eb; /* Темно-синий при наведении */
+  background-color: #2563eb;
 }
 
 .orders-separator {
@@ -117,7 +117,7 @@
 .order-modal .modal-content {
   font-size: 16px;
   line-height: 1.5;
-  color: #1e3a8a; /* Темно-синий цвет для текста */
+  color: #1e3a8a;
 }
 
 .order-modal .ant-modal-header {
@@ -125,5 +125,5 @@
 }
 
 .order-modal .ant-modal-close-x {
-  color: white; /* Белый цвет для кнопки закрытия */
+  color: white;
 }

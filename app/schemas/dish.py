@@ -1,4 +1,3 @@
-# schemas/dish.py
 from pydantic import BaseModel
 from typing import Optional
 
@@ -7,14 +6,14 @@ class DishCreate(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
-    restaurant_id: int  # Чтобы связать блюдо с рестораном
+    restaurant_id: int
 
 
 class DishUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-    restaurant_id: Optional[int] = None  # Возможность изменять ресторан для блюда
+    restaurant_id: Optional[int] = None
 
 
 class DishRead(DishCreate):
@@ -22,6 +21,7 @@ class DishRead(DishCreate):
 
     class Config:
         orm_mode = True
+
 
 class AddDishSchema(BaseModel):
     name: str

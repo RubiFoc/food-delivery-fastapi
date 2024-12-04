@@ -75,14 +75,13 @@ class BalanceUpdateRequest(BaseModel):
 
 @router.post('/user/balance')
 async def add_balance(
-        balance: BalanceUpdateRequest,  # Используем модель для валидации
+        balance: BalanceUpdateRequest,
         current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    amount = balance.amount  # Получаем amount из модели
+    amount = balance.amount
     user_id = current_user.id
 
-    # Проверяем, существует ли пользователь с данным id
     query = select(Customer).where(Customer.id == user_id)
     result = await session.execute(query)
     customer = result.scalar_one_or_none()
@@ -90,11 +89,9 @@ async def add_balance(
     if customer is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Пополняем баланс
     customer.balance += amount
     session.add(customer)
 
-    # Сохраняем изменения в базе данных
     await session.commit()
 
     return {"message": "Balance updated successfully", "new_balance": customer.balance}

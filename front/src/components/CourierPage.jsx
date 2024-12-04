@@ -17,15 +17,14 @@ const CourierPage = () => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
-      fetchOrders(storedToken);          // Получить доступные заказы
-      fetchAssignedOrders(storedToken);  // Получить назначенные заказы
+      fetchOrders(storedToken);
+      fetchAssignedOrders(storedToken);
     } else {
       setError('Токен не найден');
       setLoading(false);
     }
   }, []);
 
-  // Получить доступные заказы
   const fetchOrders = async (token) => {
     try {
       const response = await fetch('http://127.0.0.1:8000/courier/orders/not_delivered', {
@@ -49,7 +48,6 @@ const CourierPage = () => {
     }
   };
 
-  // Получить назначенные заказы
   const fetchAssignedOrders = async (token) => {
     try {
       const response = await fetch('http://127.0.0.1:8000/courier/orders/assigned', {
@@ -71,7 +69,6 @@ const CourierPage = () => {
     }
   };
 
-  // Получить информацию о заказе
   const fetchOrderInfo = async (orderId) => {
     try {
       const response = await fetch(`http://127.0.0.1:8000/courier/orders/${orderId}/info`, {
@@ -95,13 +92,11 @@ const CourierPage = () => {
     }
   };
 
-  // Закрыть модальное окно
   const closeModal = () => {
     setIsModalVisible(false);
     setOrderInfo(null);
   };
 
-  // Принять заказ
   const handleTakeOrder = async (orderId) => {
     if (!courierLocation) {
       alert('Пожалуйста, укажите ваше местоположение.');
@@ -119,8 +114,8 @@ const CourierPage = () => {
 
       if (response.ok) {
         alert(`Заказ ${orderId} успешно принят!`);
-        fetchOrders(token);          // Обновить доступные заказы
-        fetchAssignedOrders(token);  // Обновить назначенные заказы
+        fetchOrders(token);
+        fetchAssignedOrders(token);
       } else {
         const errorData = await response.json();
         throw new Error(`Ошибка ${response.status}: ${errorData.detail || 'Неизвестная ошибка'}`);
@@ -130,7 +125,6 @@ const CourierPage = () => {
     }
   };
 
-  // Доставить заказ
   const handleDeliverOrder = async (orderId) => {
     try {
       const response = await fetch(`http://127.0.0.1:8000/courier/${orderId}/deliver`, {

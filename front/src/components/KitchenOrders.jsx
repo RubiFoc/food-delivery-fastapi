@@ -94,7 +94,7 @@ function KitchenOrders() {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        window.location.href = '/login'; // Перенаправление на страницу входа
+        window.location.href = '/login';
     };
 
     useEffect(() => {

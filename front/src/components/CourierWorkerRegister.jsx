@@ -5,9 +5,8 @@ import 'tailwindcss/tailwind.css';
 function KitchenOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [token, setToken] = useState(localStorage.getItem('token')); // Retrieve the token from localStorage
+    const [token, setToken] = useState(localStorage.getItem('token'));
 
-    // Load pending orders
     const fetchOrders = async () => {
         setLoading(true);
         try {
@@ -15,7 +14,7 @@ function KitchenOrders() {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Add Bearer token
+                    'Authorization': `Bearer ${token}`,
                 },
             });
             if (!response.ok) {
@@ -31,7 +30,6 @@ function KitchenOrders() {
         }
     };
 
-    // Update order status to "prepared"
     const markAsPrepared = async (orderId) => {
         setLoading(true);
         try {
@@ -39,14 +37,14 @@ function KitchenOrders() {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Add Bearer token
+                    'Authorization': `Bearer ${token}`,
                 },
             });
             if (!response.ok) {
                 throw new Error('Failed to update order');
             }
             message.success(`Заказ ${orderId} отмечен как выполненный`);
-            fetchOrders(); // Refresh the orders list
+            fetchOrders();
         } catch (error) {
             console.error(error);
             message.error('Ошибка при обновлении заказа');
@@ -56,7 +54,7 @@ function KitchenOrders() {
     };
 
     useEffect(() => {
-        fetchOrders(); // Load orders on component mount
+        fetchOrders();
     }, [token]);
 
     return (

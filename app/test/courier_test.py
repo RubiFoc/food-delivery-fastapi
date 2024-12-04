@@ -1,11 +1,10 @@
 import pytest
 from httpx import AsyncClient
-from main import app  # Импортируем ваше FastAPI-приложение
+from main import app
 from auth.database import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from models.delivery import Courier, Order, OrderStatus
 
-# Подменяем базу данных для тестов
 @pytest.fixture
 async def override_get_async_session():
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession

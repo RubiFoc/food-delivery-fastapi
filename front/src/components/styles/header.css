@@ -1,4 +1,3 @@
-/* Основной стиль для хедера */
 .header {
     position: fixed;
     top: 0;
@@ -13,7 +12,6 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Логотип и баланс */
 .logo-and-balance {
     display: flex;
     align-items: center;
@@ -47,7 +45,6 @@
     margin-right: 10px;
 }
 
-/* Кнопки */
 .button-logout {
     background-color: transparent;
     color: white;
@@ -73,30 +70,28 @@
     background-color: #fbbf24;
 }
 
-/* Кнопка для обновления локации */
 .button-location {
-    background: linear-gradient(90deg, #34d399, #10b981); /* Градиентный фон */
+    background: linear-gradient(90deg, #34d399, #10b981);
     color: white;
     border: none;
     font-size: 1rem;
     padding: 0.8rem 1.2rem;
     border-radius: 50px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легкая тень для кнопки */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .button-location:hover {
-    background: linear-gradient(90deg, #10b981, #34d399); /* Изменение направления градиента при наведении */
-    transform: translateY(-2px); /* Легкий эффект поднятия */
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2); /* Увеличенная тень при наведении */
+    background: linear-gradient(90deg, #10b981, #34d399);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
 }
 
 .button-location:focus {
     outline: none;
-    box-shadow: 0 0 5px 2px rgba(16, 185, 129, 0.5); /* Эффект фокуса */
+    box-shadow: 0 0 5px 2px rgba(16, 185, 129, 0.5);
 }
 
-/* Навигация */
 .navigation-section {
     display: flex;
     align-items: center;
@@ -104,7 +99,6 @@
     margin-right: 50px;
 }
 
-/* Выбор категории */
 .nav-select {
     background-color: white;
     border-radius: 5px;
@@ -112,7 +106,6 @@
     margin-right: 1rem;
 }
 
-/* Стили для карточек категории */
 .categories {
     display: flex;
     gap: 1.5rem;
