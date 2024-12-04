@@ -15,7 +15,7 @@ class Role(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
     permissions = Column(JSON)
-    users = relationship("User", back_populates="role")
+    users = relationship("User", back_populates="role", cascade="all, delete-orphan")
     couriers = relationship("Courier", back_populates="role")
     customers = relationship("Customer", back_populates="role")
     kitchen_workers = relationship("KitchenWorker", back_populates="role")
@@ -33,11 +33,12 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+
     role = relationship("Role", back_populates="users")
-    courier = relationship("Courier", back_populates="user", uselist=False)
-    customer = relationship("Customer", back_populates="user", uselist=False)
-    kitchen_worker = relationship("KitchenWorker", back_populates="user", uselist=False)
-    admin = relationship("Admin", back_populates="user", uselist=False)
+    courier = relationship("Courier", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    customer = relationship("Customer", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    kitchen_worker = relationship("KitchenWorker", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    admin = relationship("Admin", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class Courier(Base):
@@ -51,7 +52,7 @@ class Courier(Base):
 
     user = relationship("User", back_populates="courier")
     role = relationship("Role", back_populates="couriers")
-    orders = relationship("Order", back_populates="courier")
+    orders = relationship("Order", back_populates="courier", cascade="all, delete-orphan")
 
     def update_rating(self, new_rating):
         if self.rating is None:
@@ -69,7 +70,7 @@ class Customer(Base):
     role_id = Column(Integer, ForeignKey("role.id"), default=1)
     user = relationship("User", back_populates="customer")
     role = relationship("Role", back_populates="customers")
-    cart = relationship("Cart", back_populates="customer")
+    cart = relationship("Cart", back_populates="customer", cascade="all, delete-orphan")
     location = Column(String, nullable=True)
 
 
@@ -86,6 +87,7 @@ class Admin(Base):
     __tablename__ = 'admin'
     id = Column(Integer, ForeignKey('user.id'), primary_key=True)
     role_id = Column(Integer, ForeignKey("role.id"), default=4)
+
     user = relationship("User", back_populates="admin")
     role = relationship("Role", back_populates="admins")
 
@@ -97,6 +99,7 @@ class Restaurant(Base):
     location = Column(String, nullable=False)
     rating = Column(Float, nullable=True)
     number_of_marks = Column(Integer, default=0, nullable=False)
+
     dishes = relationship("Dish", back_populates="restaurant")
     orders = relationship("Order", back_populates="restaurant")
 
@@ -152,7 +155,6 @@ class Order(Base):
     price = Column(Float, nullable=False)
     weight = Column(Float, nullable=False)
     time_of_creation = Column(DateTime, nullable=False)
-    time_of_delivery = Column(DateTime, nullable=True)
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)
     location = Column(String, nullable=False)
     courier_id = Column(Integer, ForeignKey('courier.id'), nullable=True)
@@ -160,12 +162,12 @@ class Order(Base):
     time_of_delivery = Column(DateTime, default=None, nullable=True)
     expected_time_of_delivery = Column(DateTime, default=None, nullable=True)
 
-    dishes = relationship("OrderDishAssociation", back_populates="order")
+    dishes = relationship("OrderDishAssociation", back_populates="order", cascade="all, delete-orphan")
     restaurant = relationship("Restaurant", back_populates="orders")
     courier = relationship("Courier", back_populates="orders")
     kitchen_worker = relationship("KitchenWorker", back_populates="orders")
     customer_id = Column(Integer, ForeignKey("customer.id"))
-    status = relationship("OrderStatus", back_populates="order", uselist=False)
+    status = relationship("OrderStatus", back_populates="order", uselist=False, cascade="all, delete-orphan")
 
 
 class OrderStatus(Base):
