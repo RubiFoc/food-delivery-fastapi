@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты</title>
+</head>
+<body>
+<h1>Отчеты</h1>
+
+<h2>Лучший курьер</h2>
+<p>ID: <span th:text="${topCourier.id}"></span></p>
+<p>Имя: <span th:text="${topCourier.user.username}"></span></p>
+<p>Рейтинг: <span th:text="${topCourier.rating}"></span></p>
+<p>Общее количество заказов: <span th:text="${topCourier.numberOfMarks}"></span></p>
+
+<h2>Лучший работник кухни</h2>
+<p>ID: <span th:text="${topKitchenWorker.id}"></span></p>
+<p>Имя: <span th:text="${topKitchenWorker.user.username}"></span></p>
+<p>Общее количество заказов: <span th:text="${topKitchenWorker.orders.size()}"></span></p>
+</body>
+</html>
