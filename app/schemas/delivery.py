@@ -24,16 +24,21 @@ class DishCategorySchema(BaseModel):
         from_attributes = True
 
 
+from pydantic import BaseModel
+
+
 class DishSchema(BaseModel):
     id: int
     name: str
-    price: float
-    weight: float
-    category_id: Union[int, DishCategorySchema]
-    rating: Optional[float] = None
-    number_of_marks: int = Field(default=0)
-    profit: float
-    time_of_preparing: float
+    price: int
+    weight: int
+    category_id: int
+    rating: int
+    number_of_marks: int
+    profit: int
+    time_of_preparing: int
+    restaurant_id: int
+    image_path: Optional[str] = None
 
     class Config:
         orm_mode = True

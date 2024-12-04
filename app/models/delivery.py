@@ -119,6 +119,7 @@ class Dish(Base):
     number_of_marks = Column(Integer, default=0, nullable=False)
     profit = Column(Float, nullable=False)
     time_of_preparing = Column(Float, nullable=False)
+    image_path = Column(String, nullable=True)  # Новое поле для хранения пути к картинке
 
     category = relationship("DishCategory", back_populates="dishes")
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=False)

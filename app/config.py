@@ -18,3 +18,5 @@ API_HOST = "localhost"
 API_PORT = 8000
 
 YANDEX_API_KEY = "4c49979c-a82a-4fda-863b-38812df1351d"
+
+UPLOAD_FOLDER = "static/"

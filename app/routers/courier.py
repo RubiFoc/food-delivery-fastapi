@@ -12,6 +12,7 @@ from config import YANDEX_API_KEY
 from dependencies import get_current_courier
 from models.delivery import Courier, Order, OrderStatus
 from schemas.delivery import OrderStatusSchema
+from schemas.order import OrderInfoSchema
 
 courier_router = APIRouter(prefix="/courier", tags=["couriers"])
 
@@ -121,8 +122,6 @@ async def take_order(
     return {"message": "Order taken successfully", "expected_time_of_delivery": expected_time_of_delivery}
 
 
-
-
 # Маршрут для уведомления о доставке заказа курьером
 @courier_router.put("/{order_id}/deliver", response_model=OrderStatusSchema)
 async def deliver_order(
@@ -202,3 +201,28 @@ async def get_assigned_orders(
     ]
 
     return order_status_list
+
+
+@courier_router.get("/orders/{order_id}/info", response_model=OrderInfoSchema)
+async def get_order_info(
+        order_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_courier: Courier = Depends(get_current_courier)
+):
+    # Получаем заказ по ID
+    result = await session.execute(
+        select(Order).where(Order.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    # Если заказ не найден, выбрасываем ошибку
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Возвращаем информацию о заказе
+    return OrderInfoSchema(
+        cost=order.price,
+        creation_date=order.time_of_creation,
+        weight=order.weight,
+        location=order.location
+    )

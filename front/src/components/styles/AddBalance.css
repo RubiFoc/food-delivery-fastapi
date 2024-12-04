@@ -192,3 +192,7 @@ button:hover {
         padding: 1.5rem;
     }
 }
+
+.amount-input {
+    width: 95%;
+}

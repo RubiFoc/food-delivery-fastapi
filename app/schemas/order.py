@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -35,3 +37,34 @@ class DetailedOrderSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class OrderDishSchema(BaseModel):
+    dish: DishSchema  # Используем схему блюда
+    quantity: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class OrderSchema(BaseModel):
+    id: int
+    price: float
+    time_of_creation: datetime
+    dishes: List[OrderDishSchema]  # Вложенный список блюд
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class OrderInfoSchema(BaseModel):
+    cost: float
+    creation_date: datetime
+    weight: float
+    location: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

@@ -1,0 +1,118 @@
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Основной контейнер */
+.main-container {
+    min-height: 100vh;
+    background-color: #f3f4f6;
+    padding-top: 6rem;
+}
+
+/* Основное содержимое */
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Заголовок */
+.title {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #1f2937;
+}
+
+/* Сетка блюд */
+.dishes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 колонки */
+    gap: 2rem; /* Отступы между элементами */
+    margin-top: 2rem;
+}
+
+/* Адаптация сетки для меньших экранов */
+@media (max-width: 1200px) {
+    .dishes-grid {
+        grid-template-columns: repeat(3, 1fr); /* 3 колонки для экранов до 1200px */
+    }
+}
+
+@media (max-width: 900px) {
+    .dishes-grid {
+        grid-template-columns: repeat(2, 1fr); /* 2 колонки для экранов до 900px */
+    }
+}
+
+@media (max-width: 600px) {
+    .dishes-grid {
+        grid-template-columns: 1fr; /* 1 колонка для экранов до 600px */
+    }
+}
+
+.dish-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.dish-card:hover {
+    transform: scale(1.05);
+}
+
+.dish-image {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+/* Название блюда */
+.dish-title {
+    font-size: 1.25rem;
+    margin: 0.5rem 0;
+    color: #333;
+}
+
+.dish-price {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+/* Кнопка "Добавить в корзину" */
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.button-cart {
+    font-size: 1.25rem;
+    color: white;
+    background-color: #22c55e;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.button-cart:hover {
+    background-color: #16a34a;
+}
+
+/* Стилевые настройки для ошибок и загрузки */
+.spinner {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.text-red-500 {
+    color: #dc2626;
+}
+
+.col-span-full {
+    grid-column: span 4;
+}

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy import text, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +15,7 @@ from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociat
     OrderStatus, User
 from schemas.cart import CartDishAddRequest
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
+from schemas.dish import AddDishSchema
 from schemas.order import DetailedOrderSchema
 
 router = APIRouter(prefix="/api", tags=["api"])
@@ -120,23 +121,38 @@ async def get_all_dishes(session: AsyncSession = Depends(get_async_session)):
 
 
 @router.post("/dishes", response_model=DishSchema)
-async def add_dish(dish: DishSchema, session: AsyncSession = Depends(get_async_session)):
-    category_query = await session.execute(select(DishCategory).where(DishCategory.id == dish.category_id))
+async def add_dish(
+        name: str,
+        price: float,
+        weight: float,
+        category_id: int,
+        profit: float,
+        time_of_preparing: int,
+        image: UploadFile = File(...),
+        session: AsyncSession = Depends(get_async_session)
+):
+    # Сохраняем изображение
+    from utils.dish import save_image
+    image_path = await save_image(image)
+
+    # Получаем категорию
+    category_query = await session.execute(select(DishCategory).where(DishCategory.id == category_id))
     category = category_query.scalars().first()
 
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     new_dish = Dish(
-        name=dish.name,
-        price=dish.price,
-        weight=dish.weight,
-        category_id=dish.category_id,
+        name=name,
+        price=price,
+        weight=weight,
+        category_id=category_id,
         rating=0,
         number_of_marks=0,
-        profit=dish.profit,
-        time_of_preparing=dish.time_of_preparing,
-        restaurant_id=1
+        profit=profit,
+        time_of_preparing=time_of_preparing,
+        restaurant_id=1,
+        image_path=image_path  # Сохраняем путь к изображению
     )
 
     session.add(new_dish)
@@ -289,6 +305,7 @@ async def add_dish_to_cart(
 
     return CartSchema.from_orm(cart)
 
+
 @router.post("/cart/create-order", response_model=OrderSchema)
 async def create_order_from_cart(
         current_user: User = Depends(get_current_user),  # Получаем текущего пользователя
@@ -364,10 +381,10 @@ async def create_order_from_cart(
     return OrderSchema.from_orm(new_order)
 
 
-@router.post("/customer/{customer_id}/update_location", summary="Обновить местоположение пользователя")
+@router.post("/customer/update_location", summary="Обновить местоположение пользователя")
 async def update_customer_location(
-        customer_id: int,
         address: str,
+        current_user: User = Depends(get_current_user),  # Получаем текущего пользователя
         session: AsyncSession = Depends(get_async_session)
 ):
     # Добавляем "Минск" к адресу для уточнения
@@ -403,7 +420,7 @@ async def update_customer_location(
         longitude, latitude = map(float, coordinates_str.split(" "))
 
         # Получаем пользователя из базы данных с использованием AsyncSession
-        result = await session.execute(select(Customer).filter(Customer.id == customer_id))
+        result = await session.execute(select(Customer).filter(Customer.id == current_user.id))
         customer = result.scalar_one_or_none()
 
         if not customer:
@@ -414,7 +431,7 @@ async def update_customer_location(
 
         # Сохраняем изменения в базе данных
         await session.commit()
-        return {"customer_id": customer_id, "location": customer.location}
+        return {"customer_id": current_user.id, "location": customer.location}
 
     except (IndexError, KeyError):
         raise HTTPException(status_code=404, detail="Не удалось найти координаты для указанного адреса")

@@ -1,0 +1,139 @@
+/* Основной стиль для хедера */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2563eb;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Логотип и баланс */
+.logo-and-balance {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.logo img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.balance-section {
+    display: flex;
+    align-items: center;
+    margin-left: 20px;
+}
+
+.balance {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+/* Кнопки */
+.button-logout {
+    background-color: transparent;
+    color: white;
+    border: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.button-logout:hover {
+    color: #f3f4f6;
+    background-color: #dc2626;
+}
+
+.button-recharge {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.button-recharge:hover {
+    background-color: #fbbf24;
+}
+
+/* Кнопка для обновления локации */
+.button-location {
+    background: linear-gradient(90deg, #34d399, #10b981); /* Градиентный фон */
+    color: white;
+    border: none;
+    font-size: 1rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Легкая тень для кнопки */
+}
+
+.button-location:hover {
+    background: linear-gradient(90deg, #10b981, #34d399); /* Изменение направления градиента при наведении */
+    transform: translateY(-2px); /* Легкий эффект поднятия */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2); /* Увеличенная тень при наведении */
+}
+
+.button-location:focus {
+    outline: none;
+    box-shadow: 0 0 5px 2px rgba(16, 185, 129, 0.5); /* Эффект фокуса */
+}
+
+/* Навигация */
+.navigation-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-right: 50px;
+}
+
+/* Выбор категории */
+.nav-select {
+    background-color: white;
+    border-radius: 5px;
+    min-width: 200px;
+    margin-right: 1rem;
+}
+
+/* Стили для карточек категории */
+.categories {
+    display: flex;
+    gap: 1.5rem;
+    background-color: #2563eb;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.category {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    border-radius: 0.5rem;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.category:hover {
+    background-color: #f3f4f6;
+    color: #2563eb;
+    transform: scale(1.1);
+}

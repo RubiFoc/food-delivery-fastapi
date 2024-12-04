@@ -23,6 +23,7 @@ pytest-asyncio = "^0.24.0"
 passlib = "^1.7.4"
 fastapi-admin = "^1.0.4"
 geopy = "^2.4.1"
+fastadmin = {extras = ["fastapi", "sqlalchemy"], version = "^0.2.16"}
 
 
 [build-system]

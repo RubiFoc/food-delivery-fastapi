@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button, Select, Spin, message } from 'antd';
-import { LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import './styles/style.css';  // Импорт CSS-файла
+import {useState, useEffect} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
+import {Button, Select, Spin, message} from 'antd';
+import {LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined} from '@ant-design/icons';
+import Header from './Header';
+import './styles/MainPage.css';  // Импорт CSS-файла
 
 function MainPage() {
     const [token, setToken] = useState(localStorage.getItem('token'));
@@ -167,47 +168,14 @@ function MainPage() {
 
     return (
         <div className="main-container">
-            <header className="header">
-                <div className="logo-and-balance">
-                    <Link to="/" className="logo">
-                        <img src="src/components/images/logo.png" alt="Logo"/>
-                        <span>FoodExpress</span>
-                    </Link>
-                    {isAuthenticated && (
-                        <div className="balance-section">
-                            <span className="balance">Баланс: {balance} ₽</span>
-                            <Link to="/add_balance">
-                                <Button icon={<PlusCircleOutlined />} className="button-recharge">
-                                    Пополнить
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
-                {isAuthenticated && (
-                    <div className="navigation-section">
-                        <Select
-                            placeholder="Выберите категорию"
-                            value={selectedCategory}
-                            onChange={handleCategoryChange}
-                            className="nav-select"
-                        >
-                            <Select.Option value="">Все</Select.Option>
-                            {categories.map(c => (
-                                <Select.Option key={c.name} value={c.name}>
-                                    {c.name}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                        <Button type="text" icon={<ShoppingCartOutlined />} className="button-cart" onClick={() => navigate('/create_order')}>
-                            Корзина
-                        </Button>
-                        <Button type="text" icon={<LogoutOutlined />} className="button-logout" onClick={handleLogout}>
-                            Выйти
-                        </Button>
-                    </div>
-                )}
-            </header>
+            <Header
+                isAuthenticated={isAuthenticated}
+                balance={balance}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                handleLogout={handleLogout}
+            />
 
             <main className="main-content">
                 {isAuthenticated ? (
@@ -221,23 +189,31 @@ function MainPage() {
                             ) : error ? (
                                 <p className="col-span-full text-red-500 text-center">{error}</p>
                             ) : (
-                                dishes.map(dish => (
-                                    <div key={dish.id} className="dish-card">
-                                        <img src={dish.image || '/default-dish.jpg'} alt={dish.name}
-                                             className="dish-image"/>
-                                        <h3 className="dish-title">{dish.name}</h3>
-                                        <p>{dish.description}</p>
-                                        <p className="dish-price">{dish.price} ₽</p>
-                                        <Button
-                                            type="primary"
-                                            icon={<ShoppingCartOutlined />}
-                                            className="mt-4 w-full bg-green-500"
-                                            onClick={() => addToCart(dish)}
-                                        >
-                                            В корзину
-                                        </Button>
-                                    </div>
-                                ))
+                                dishes.length > 0 ? (
+                                    dishes.map(dish => (
+                                        <div key={dish.id} className="dish-card">
+                                            <img
+                                                // src={dish.image || '/default-dish.jpg'}
+                                                src={"src/components/images/logo.png"}
+                                                alt={dish.name}
+                                                className="dish-image"
+                                            />
+                                            <h3 className="dish-title">{dish.name}</h3>
+                                            <p>{dish.description}</p>
+                                            <p className="dish-price">{dish.price} ₽</p>
+                                            <Button
+                                                type="primary"
+                                                icon={<ShoppingCartOutlined/>}
+                                                className="mt-4 w-full bg-green-500"
+                                                onClick={() => addToCart(dish)}
+                                            >
+                                                В корзину
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="col-span-full text-center text-gray-500">Нет доступных блюд.</p>
+                                )
                             )}
                         </div>
                     </>

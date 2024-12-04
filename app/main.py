@@ -1,8 +1,6 @@
 from fastapi import FastAPI
-from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from auth.auth import auth_backend
 from routers.courier import courier_router
 from routers.courier_worker import courier_worker_router
 from routers.users import router as auth_router
@@ -24,7 +22,7 @@ app.include_router(courier_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Укажите ваш фронтенд-домен
+    allow_origins=["http://localhost:5174"],  # Укажите ваш фронтенд-домен
     allow_credentials=True,
     allow_methods=["*"],  # Или конкретные методы, например, ["GET", "POST"]
     allow_headers=["*"],  # Или конкретные заголовки

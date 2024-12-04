@@ -11,6 +11,7 @@ import CourierPage from "./components/CourierPage.jsx";
 import OrderPage from "./components/OrderPage.jsx";
 import AddBalance from "./components/AddBalance.jsx";
 import './index.css'
+import UpdateLocation from "./components/UpdateLocation.jsx";
 
 const App = () => {
     const [dishes, setDishes] = useState([]);
@@ -30,6 +31,7 @@ const App = () => {
                     <Route path="/create_order" element={<OrderPage/>}/>
                     <Route path="/add_balance" element={<AddBalance/>}/>
                     <Route path="/courier/take_order" element={<CourierPage/>}/>
+                    <Route path="/customer/location" element={<UpdateLocation/>}/>
 
                 </Routes>
             </Router>

@@ -1,20 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Button, Select, Spin, message } from 'antd';
-import { LogoutOutlined, ShoppingCartOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import {useState, useEffect} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import './styles/AddBalance.css';  // Импорт CSS-файла
+import Header from './Header';  // Импорт компонента Header
 
 function AddBalance() {
     const location = useLocation();
-    const navigate = useNavigate();
     const [token, setToken] = useState('');
     const [amount, setAmount] = useState('');
     const [error, setError] = useState('');
     const [newBalance, setNewBalance] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [balance, setBalance] = useState(0);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [balance, setBalance] = useState(0);
+
 
     useEffect(() => {
         // Проверка наличия токена в localStorage
@@ -97,7 +96,7 @@ function AddBalance() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ amount: parsedAmount }), // Отправляем parsedAmount
+                body: JSON.stringify({amount: parsedAmount}), // Отправляем parsedAmount
             });
 
             if (response.ok) {
@@ -134,47 +133,14 @@ function AddBalance() {
 
     return (
         <div className="main-container">
-            <header className="header">
-                <div className="logo-and-balance">
-                    <Link to="/" className="logo">
-                        <img src="src/components/images/logo.png" alt="Logo"/>
-                        <span>FoodExpress</span>
-                    </Link>
-                    {isAuthenticated && (
-                        <div className="balance-section">
-                            <span className="balance">Баланс: {balance} ₽</span>
-                            <Link to="/add_balance">
-                                <Button icon={<PlusCircleOutlined />} className="button-recharge">
-                                    Пополнить
-                                </Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
-                {isAuthenticated && (
-                    <div className="navigation-section">
-                        <Select
-                            placeholder="Выберите категорию"
-                            value={selectedCategory}
-                            onChange={setSelectedCategory}
-                            className="nav-select"
-                        >
-                            <Select.Option value="">Все</Select.Option>
-                            {categories.map(c => (
-                                <Select.Option key={c.name} value={c.name}>
-                                    {c.name}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                        <Button type="text" icon={<ShoppingCartOutlined />} className="button-cart" onClick={() => navigate('/create_order')}>
-                            Корзина
-                        </Button>
-                        <Button type="text" icon={<LogoutOutlined />} className="button-logout" onClick={handleLogout}>
-                            Выйти
-                        </Button>
-                    </div>
-                )}
-            </header>
+            <Header
+                isAuthenticated={isAuthenticated}
+                balance={balance}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                handleLogout={handleLogout}
+            />
 
             <main className="main-content">
                 <div className="bg-white p-8 rounded-lg shadow-lg w-96">
@@ -194,7 +160,7 @@ function AddBalance() {
                                     type="number"
                                     id="amount"
                                     name="amount"
-                                    className="w-full p-2 border border-gray-300 rounded-md"
+                                    className="w-full p-2 border border-gray-300 rounded-md amount-input"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
                                     required

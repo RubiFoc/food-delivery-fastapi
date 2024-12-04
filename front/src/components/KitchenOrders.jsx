@@ -1,28 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, message } from 'antd';
-import 'tailwindcss/tailwind.css';
+import { Button, Card, message, Spin, Modal } from 'antd';
+import './styles/KitchenOrders.css';
 
 function KitchenOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [updatingOrderId, setUpdatingOrderId] = useState(null);
+    const [orderDetails, setOrderDetails] = useState(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
-    // Функция для получения Bearer токена из localStorage
     const getAuthToken = () => {
-        return localStorage.getItem('token'); // Предположим, что токен сохраняется в localStorage
+        return localStorage.getItem('token');
     };
 
-    // Загрузка невыполненных заказов
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const token = getAuthToken(); // Получаем токен
+            const token = getAuthToken();
             const response = await fetch('http://127.0.0.1:8000/kitchen_worker/orders/not_ready', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Добавляем токен в заголовок
+                    'Authorization': `Bearer ${token}`,
                 },
-                credentials: 'include', // Отправка кук с запросом
+                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Failed to fetch orders');
@@ -37,58 +38,98 @@ function KitchenOrders() {
         }
     };
 
-    // Обновление статуса заказа на "выполнен"
     const markAsPrepared = async (orderId) => {
-        setLoading(true); // Устанавливаем статус загрузки при обновлении
+        setUpdatingOrderId(orderId);
+        setLoading(true);
         try {
-            const token = getAuthToken(); // Получаем токен
+            const token = getAuthToken();
             const response = await fetch(`http://127.0.0.1:8000/kitchen_worker/${orderId}/prepare`, {
                 method: 'PUT',
                 headers: {
                     'Accept': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Добавляем токен в заголовок
+                    'Authorization': `Bearer ${token}`,
                 },
-                credentials: 'include', // Отправка кук с запросом
+                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Failed to update order');
             }
             message.success(`Заказ ${orderId} отмечен как выполненный`);
-            fetchOrders(); // Обновляем список заказов
+            fetchOrders();
         } catch (error) {
             console.error(error);
             message.error('Ошибка при обновлении заказа');
         } finally {
-            setLoading(false); // Закрытие статуса загрузки
+            setLoading(false);
+            setUpdatingOrderId(null);
         }
     };
 
+    const fetchOrderDetails = async (orderId) => {
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`http://127.0.0.1:8000/kitchen_worker/orders/${orderId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch order details');
+            }
+            const data = await response.json();
+            setOrderDetails(data);
+            setIsModalVisible(true);
+        } catch (error) {
+            console.error(error);
+            message.error('Ошибка при загрузке деталей заказа');
+        }
+    };
+
+    const closeModal = () => {
+        setIsModalVisible(false);
+        setOrderDetails(null);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login'; // Перенаправление на страницу входа
+    };
+
     useEffect(() => {
-        fetchOrders(); // Загружаем заказы при загрузке страницы
+        fetchOrders();
     }, []);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="max-w-4xl w-full p-6">
-                <h1 className="text-3xl font-bold text-center mb-8">Невыполненные заказы</h1>
+        <div className="orders-container">
+            <div className="orders-header">
+                <h1>Невыполненные заказы</h1>
                 {loading ? (
-                    <p className="text-center text-gray-500">Загрузка...</p>
+                    <Spin size="large" className="loading-spinner" />
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="orders-grid">
                         {orders.length === 0 ? (
-                            <p className="col-span-2 text-center text-gray-500">Нет невыполненных заказов</p>
+                            <p className="no-orders-text">Нет невыполненных заказов</p>
                         ) : (
                             orders.map(order => (
-                                <Card key={order.order_id} className="shadow-md">
-                                    <p className="text-lg font-semibold">Заказ ID: {order.order_id}</p>
+                                <Card key={order.order_id} className="order-card">
+                                    <p className="order-id">Заказ ID: {order.order_id}</p>
                                     <p>Статус: {order.is_prepared ? 'Готов' : 'Не готов'}</p>
                                     <Button
                                         type="primary"
-                                        className={`mt-4 w-full ${loading ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                                        className={`action-btn ${updatingOrderId === order.order_id ? 'processing' : ''}`}
                                         onClick={() => markAsPrepared(order.order_id)}
-                                        disabled={loading || order.is_prepared}
+                                        disabled={updatingOrderId === order.order_id || order.is_prepared}
                                     >
-                                        {loading ? 'Обрабатывается...' : 'Выполнен'}
+                                        {updatingOrderId === order.order_id ? 'Обрабатывается...' : 'Выполнен'}
+                                    </Button>
+                                    <Button
+                                        type="default"
+                                        className="action-btn"
+                                        onClick={() => fetchOrderDetails(order.order_id)}
+                                    >
+                                        Подробнее
                                     </Button>
                                 </Card>
                             ))
@@ -96,6 +137,35 @@ function KitchenOrders() {
                     </div>
                 )}
             </div>
+
+            <Modal
+                title="Детали заказа"
+                visible={isModalVisible}
+                onCancel={closeModal}
+                footer={null}
+            >
+                <div>
+                    <h3>Блюда в заказе:</h3>
+                    {orderDetails?.dishes && orderDetails.dishes.length > 0 ? (
+                        orderDetails.dishes.map(dish => (
+                            <div key={dish.dish.id} className="dish-details">
+                                <span>{dish.dish.name} (x{dish.quantity})</span>
+                                <span>Цена: {dish.dish.price} руб.</span>
+                            </div>
+                        ))
+                    ) : (
+                        <p>Нет блюд в заказе</p>
+                    )}
+                </div>
+            </Modal>
+
+            <Button
+                type="default"
+                className="logout-btn"
+                onClick={handleLogout}
+            >
+                Выход
+            </Button>
         </div>
     );
 }

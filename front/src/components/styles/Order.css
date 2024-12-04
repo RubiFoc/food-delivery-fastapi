@@ -1,140 +1,140 @@
-/* Основные стили */
-body {
-    margin: 0;
-    font-family: 'Arial', sans-serif;
-}
+/*!* Основные стили *!*/
+/*body {*/
+/*    margin: 0;*/
+/*    font-family: 'Arial', sans-serif;*/
+/*}*/
 
-/* Основной контейнер */
-.main-container {
-    min-height: 100vh;
-    background-color: #f3f4f6;
-    padding-top: 6rem;
-}
+/*!* Основной контейнер *!*/
+/*.main-container {*/
+/*    min-height: 100vh;*/
+/*    background-color: #f3f4f6;*/
+/*    padding-top: 6rem;*/
+/*}*/
 
-/* Хедер */
-.header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #2563eb;
-    padding: 1.5rem 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+/*!* Хедер *!*/
+/*.header {*/
+/*    position: fixed;*/
+/*    top: 0;*/
+/*    left: 0;*/
+/*    width: 100%;*/
+/*    z-index: 10;*/
+/*    display: flex;*/
+/*    justify-content: space-between;*/
+/*    align-items: center;*/
+/*    background-color: #2563eb;*/
+/*    padding: 1.5rem 2rem;*/
+/*    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);*/
+/*}*/
 
-/* Логотип и баланс */
-.logo-and-balance {
-    display: flex;
-    align-items: center;
-}
+/*!* Логотип и баланс *!*/
+/*.logo-and-balance {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*}*/
 
-.logo {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
-}
+/*.logo {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    text-decoration: none;*/
+/*    color: white;*/
+/*    font-size: 1.5rem;*/
+/*    font-weight: bold;*/
+/*}*/
 
-.logo img {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-}
+/*.logo img {*/
+/*    width: 40px;*/
+/*    height: 40px;*/
+/*    margin-right: 10px;*/
+/*}*/
 
-.balance-section {
-    display: flex;
-    align-items: center;
-    margin-left: 20px;
-}
+/*.balance-section {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    margin-left: 20px;*/
+/*}*/
 
-.balance {
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-right: 10px;
-}
+/*.balance {*/
+/*    color: white;*/
+/*    font-weight: bold;*/
+/*    font-size: 1.2rem;*/
+/*    margin-right: 10px;*/
+/*}*/
 
-/* Кнопка возврата на главную */
-.back-to-home {
-    background-color: transparent;
-    color: white;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    margin-right: 50px;
-}
+/*!* Кнопка возврата на главную *!*/
+/*.back-to-home {*/
+/*    background-color: transparent;*/
+/*    color: white;*/
+/*    border: none;*/
+/*    font-size: 1.2rem;*/
+/*    cursor: pointer;*/
+/*    margin-right: 50px;*/
+/*}*/
 
-.back-to-home:hover {
-    color: #f3f4f6;
-    background-color: #2563eb;
-}
+/*.back-to-home:hover {*/
+/*    color: #f3f4f6;*/
+/*    background-color: #2563eb;*/
+/*}*/
 
-/* Основное содержимое */
-.main-content {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
+/*!* Основное содержимое *!*/
+/*.main-content {*/
+/*    padding: 2rem;*/
+/*    max-width: 1200px;*/
+/*    margin: 0 auto;*/
+/*}*/
 
-/* Заголовок */
-.title {
-    text-align: center;
-    margin-bottom: 2rem;
-    color: #1f2937;
-}
+/*!* Заголовок *!*/
+/*.title {*/
+/*    text-align: center;*/
+/*    margin-bottom: 2rem;*/
+/*    color: #1f2937;*/
+/*}*/
 
-/* Сетка блюд */
-.dishes-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
+/*!* Сетка блюд *!*/
+/*.dishes-grid {*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    gap: 1.5rem;*/
+/*}*/
 
-/* Карточка блюда */
-.dish-card {
-    padding: 1rem;
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
+/*!* Карточка блюда *!*/
+/*.dish-card {*/
+/*    padding: 1rem;*/
+/*    background-color: white;*/
+/*    border-radius: 0.5rem;*/
+/*    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);*/
+/*    transition: transform 0.3s ease;*/
+/*}*/
 
-.dish-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
+/*.dish-card:hover {*/
+/*    transform: scale(1.05);*/
+/*    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);*/
+/*}*/
 
-.dish-title {
-    font-size: 1.25rem;
-    margin: 0.5rem 0;
-    color: #333;
-}
+/*.dish-title {*/
+/*    font-size: 1.25rem;*/
+/*    margin: 0.5rem 0;*/
+/*    color: #333;*/
+/*}*/
 
-.dish-price {
-    font-weight: bold;
-    color: #4CAF50;
-}
+/*.dish-price {*/
+/*    font-weight: bold;*/
+/*    color: #4CAF50;*/
+/*}*/
 
-/* Кнопка баланса */
-.button-balance {
-    background-color: white;
-    color: #2563eb;
-    font-size: 1rem;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
+/*!* Кнопка баланса *!*/
+/*.button-balance {*/
+/*    background-color: white;*/
+/*    color: #2563eb;*/
+/*    font-size: 1rem;*/
+/*    font-weight: bold;*/
+/*    padding: 0.5rem 1rem;*/
+/*    border: none;*/
+/*    border-radius: 0.5rem;*/
+/*    cursor: pointer;*/
+/*    transition: background-color 0.3s ease, color 0.3s ease;*/
+/*}*/
 
-.button-balance:hover {
-    background-color: #fbbf24;
-    color: white;
-}
+/*.button-balance:hover {*/
+/*    background-color: #fbbf24;*/
+/*    color: white;*/
+/*}*/

@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from auth.database import get_async_session
 from dependencies import get_current_kitchen_worker
-from models.delivery import KitchenWorker, Order, OrderStatus
+from models.delivery import KitchenWorker, Order, OrderStatus, OrderDishAssociation
 from schemas.delivery import OrderStatusSchema
+from schemas.order import OrderSchema
 
 kitchen_worker_router = APIRouter(prefix="/kitchen_worker", tags=["kitchen_workers"])
 
@@ -91,3 +92,25 @@ async def get_not_ready_orders(
     ]
 
     return order_status_list
+
+
+@kitchen_worker_router.get("/orders/{order_id}", response_model=OrderSchema)
+async def get_order_details(
+        order_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_kitchen_worker: KitchenWorker = Depends(get_current_kitchen_worker)
+):
+    # Получаем заказ по ID с загрузкой связанных блюд
+    result = await session.execute(
+        select(Order)
+        .options(selectinload(Order.dishes).selectinload(OrderDishAssociation.dish))
+        .where(Order.id == order_id)
+    )
+    order = result.scalars().first()
+
+    # Проверяем, найден ли заказ
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Возвращаем заказ и информацию о блюдах
+    return order

@@ -155,6 +155,20 @@ dev = ["cogapp", "pre-commit", "pytest", "wheel"]
 tests = ["pytest"]
 
 [[package]]
+name = "asgiref"
+version = "3.8.1"
+description = "ASGI specs, helper code, and adapters"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "asgiref-3.8.1-py3-none-any.whl", hash = "sha256:3e1e3ecc849832fe52ccf2cb6686b7a55f82bb1d6aee72a58826471390335e47"},
+    {file = "asgiref-3.8.1.tar.gz", hash = "sha256:c343bd80a0bec947a9860adb4c432ffa7db769836c64238fc34bdc3fec84d590"},
+]
+
+[package.extras]
+tests = ["mypy (>=0.800)", "pytest", "pytest-asyncio"]
+
+[[package]]
 name = "async-timeout"
 version = "5.0.1"
 description = "Timeout context manager for asyncio programs"
@@ -471,6 +485,31 @@ files = [
 [package.dependencies]
 dnspython = ">=2.0.0"
 idna = ">=2.0.0"
+
+[[package]]
+name = "fastadmin"
+version = "0.2.16"
+description = "FastAdmin is an easy-to-use Admin Dashboard App for FastAPI/Flask/Django inspired by Django Admin."
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "fastadmin-0.2.16-py3-none-any.whl", hash = "sha256:084df3cdf1cc0149b741d9f49af0b9e531bdcdc0878d867e3efc016d4a3656b9"},
+    {file = "fastadmin-0.2.16.tar.gz", hash = "sha256:09bd318d8ad825a17ba5b130a4bd1d0c880edaa20b23f66185d7db85fcfb12dc"},
+]
+
+[package.dependencies]
+asgiref = ">=3.7.0,<4.0.0"
+fastapi = {version = "==0.*", optional = true, markers = "extra == \"fastapi\""}
+pyjwt = ">=2.6.0,<3.0.0"
+sqlalchemy = {version = "==2.*", extras = ["asyncio"], optional = true, markers = "extra == \"sqlalchemy\""}
+
+[package.extras]
+django = ["django (==5.*)"]
+fastapi = ["fastapi (==0.*)"]
+flask = ["flask (==2.*)"]
+pony = ["pony (==0.*)"]
+sqlalchemy = ["sqlalchemy[asyncio] (==2.*)"]
+tortoise-orm = ["tortoise-orm (==0.*)"]
 
 [[package]]
 name = "fastapi"
@@ -1956,4 +1995,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "96f3670468f7968385af64e4cc1c33fd1440a0f7a1990045676e4083421633dc"
+content-hash = "5caf2d167b96a86ec4be6e1f2feff918a85659d6a669c428c87c41417cf2968f"

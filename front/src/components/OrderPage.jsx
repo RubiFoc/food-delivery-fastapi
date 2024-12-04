@@ -1,31 +1,52 @@
-import { useEffect, useState } from 'react';
-import { Button, Card, message, Spin } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {Button, Card, message, Spin} from 'antd';
+import {useNavigate} from 'react-router-dom';
+import Header from './Header';  // Импортируем Header
 import './styles/Order.css'; // Подключаем стили
 
 function OrderPage() {
     const [token, setToken] = useState(localStorage.getItem('token'));
-    const [cart, setCart] = useState([]);  // Убедитесь, что cart всегда массив
+    const [cart, setCart] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const [balance, setBalance] = useState(0);
+    const [categories, setCategories] = useState([]); // Допустим, категории берутся откуда-то
+    const [selectedCategory, setSelectedCategory] = useState('');
+
+    useEffect(() => {
+        checkAuth();
+        fetchCategories(); // Загрузка категорий
+    }, []);
 
     // Проверка аутентификации
-    useEffect(() => {
-        const checkAuth = async () => {
-            const storedToken = localStorage.getItem('token');
-            if (storedToken) {
-                setToken(storedToken);
-                fetchCart(storedToken);  // Получаем данные корзины
-                fetchBalance(storedToken);  // Получаем баланс
-            } else {
-                setError('Token not found');
+    const checkAuth = async () => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            setToken(storedToken);
+            fetchCart(storedToken);
+            fetchBalance(storedToken);
+        } else {
+            setError('Token not found');
+        }
+    };
+
+    // Функция для получения категорий
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/categories', {
+                method: 'GET',
+                headers: {'Authorization': `Bearer ${token}`},
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setCategories(data.categories);
             }
-        };
-        checkAuth();
-    }, []);
+        } catch (error) {
+            console.error('Ошибка при загрузке категорий:', error);
+        }
+    };
 
     // Функция для получения информации о блюде по dish_id
     const fetchDishDetails = async (dish_id) => {
@@ -148,22 +169,15 @@ function OrderPage() {
 
     return (
         <div className="main-container">
-            <header className="header">
-                <div className="logo-and-balance">
-                    <a href="/" className="logo">
-                        <img src="src/components/images/logo.png" alt="Logo"/>
-                        <span>My Food App</span>
-                    </a>
-                    {token && (
-                        <div className="balance-section">
-                            <span className="balance">Баланс: {balance} ₽</span>
-                        </div>
-                    )}
-                </div>
-                <button className="back-to-home" onClick={() => navigate('/')}>
-                    На главную
-                </button>
-            </header>
+            {/* Встраиваем Header */}
+            <Header
+                isAuthenticated={!!token}
+                balance={balance}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={(value) => setSelectedCategory(value)}
+                handleLogout={handleLogout}
+            />
 
             <div className="main-content">
                 <h1 className="title">Ваш заказ</h1>
