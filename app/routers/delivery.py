@@ -15,6 +15,10 @@ from models.delivery import DishCategory, Dish, Customer, Cart, CartDishAssociat
     OrderStatus, User
 from schemas.cart import CartDishAddRequest
 from schemas.delivery import DishSchema, DishCategorySchema, CartSchema, OrderSchema
+from services.customer_service import update_customer_location_service, get_cart_with_dishes, calculate_order_details, \
+    get_customer_with_balance_check, update_customer_balance, create_new_order, validate_current_user, \
+    validate_request_data, get_or_create_cart, add_or_update_cart_dish
+from utils.customer_location import get_coordinates_from_address
 
 router = APIRouter(prefix="/api", tags=["api"])
 
@@ -95,33 +99,20 @@ async def add_dish_to_cart(
         session: AsyncSession = Depends(get_async_session),
         current_user: User = Depends(get_current_user)
 ):
-    if not current_user:
-        raise HTTPException(status_code=404, detail="Customer not found")
+    # Проверка пользователя и валидация данных
+    validate_current_user(current_user)
+    validate_request_data(request)
 
-    dish = await session.get(Dish, request.dish_id)
-    if not dish:
-        raise HTTPException(status_code=404, detail="Dish not found")
+    # Проверка существования блюда
+    dish = await get_dish_by_id(request.dish_id, session)
 
-    cart_query = await session.execute(select(Cart).where(Cart.customer_id == current_user.id))
-    cart = cart_query.scalars().first()
+    # Получение или создание корзины
+    cart = await get_or_create_cart(current_user.id, session)
 
-    if not cart:
-        cart = Cart(customer_id=current_user.id)
-        session.add(cart)
-        await session.flush()
+    # Добавление или обновление блюда в корзине
+    await add_or_update_cart_dish(cart.id, request.dish_id, request.quantity, session)
 
-    association_query = await session.execute(
-        select(CartDishAssociation)
-        .where(CartDishAssociation.cart_id == cart.id, CartDishAssociation.dish_id == request.dish_id)
-    )
-    association = association_query.scalars().first()
-
-    if association:
-        association.quantity += request.quantity
-    else:
-        new_association = CartDishAssociation(cart_id=cart.id, dish_id=request.dish_id, quantity=request.quantity)
-        session.add(new_association)
-
+    # Коммит и возврат обновлённой корзины
     await session.commit()
     await session.refresh(cart, ["dishes"])
 
@@ -133,56 +124,14 @@ async def create_order_from_cart(
         current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    cart_query = await session.execute(
-        select(Cart)
-        .where(Cart.customer_id == current_user.id)
-        .options(joinedload(Cart.dishes).joinedload(CartDishAssociation.dish))
-    )
-    cart = cart_query.scalars().first()
+    cart = await get_cart_with_dishes(current_user, session)
 
-    if not cart or not cart.dishes:
-        raise HTTPException(status_code=404, detail="Cart is empty or not found")
+    total_price, total_weight = calculate_order_details(cart)
 
-    total_price = sum(dish.quantity * dish.dish.price for dish in cart.dishes)
-    total_weight = sum(dish.quantity * dish.dish.weight for dish in cart.dishes)
+    customer = await get_customer_with_balance_check(current_user, total_price, session)
+    await update_customer_balance(customer, total_price, session)
 
-    customer_query = await session.execute(select(Customer).filter(Customer.id == current_user.id))
-    customer = customer_query.scalars().first()
-
-    if not customer:
-        raise HTTPException(status_code=404, detail="Customer not found")
-
-    if customer.balance < total_price:
-        raise HTTPException(status_code=400, detail="Insufficient balance to complete the order")
-
-    customer.balance -= total_price
-    session.add(customer)
-
-    location = customer.location
-    if not location:
-        raise HTTPException(status_code=404, detail="Customer location not found")
-
-    new_order = Order(
-        price=total_price,
-        weight=total_weight,
-        time_of_creation=datetime.now(),
-        customer_id=current_user.id,
-        location=location,
-        restaurant_id=1
-    )
-    session.add(new_order)
-    await session.flush()
-
-    for cart_dish in cart.dishes:
-        order_dish = OrderDishAssociation(
-            order_id=new_order.id,
-            dish_id=cart_dish.dish_id,
-            quantity=cart_dish.quantity
-        )
-        session.add(order_dish)
-
-    order_status = OrderStatus(order_id=new_order.id)
-    session.add(order_status)
+    new_order = await create_new_order(customer, cart, total_price, total_weight, session)
 
     for cart_dish in cart.dishes:
         await session.delete(cart_dish)
@@ -199,43 +148,6 @@ async def update_customer_location(
         current_user: User = Depends(get_current_user),
         session: AsyncSession = Depends(get_async_session)
 ):
-    address = "Минск, " + address
-    base_url = "https://geocode-maps.yandex.ru/1.x/"
-    params = {
-        "apikey": YANDEX_API_KEY,
-        "geocode": address,
-        "format": "json"
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(base_url, params=params)
-
-    if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail="Ошибка при запросе к Яндекс.Картам")
-
-    data = response.json()
-    try:
-        geo_objects = data["response"]["GeoObjectCollection"]["featureMember"]
-        if not geo_objects:
-            raise HTTPException(status_code=404, detail="Не найдено местоположение для указанного адреса")
-
-        for geo_object in geo_objects:
-            coordinates_str = geo_object["GeoObject"]["Point"]["pos"]
-
-        geo_object = geo_objects[0]["GeoObject"]
-        coordinates_str = geo_object["Point"]["pos"]
-        longitude, latitude = map(float, coordinates_str.split(" "))
-
-        result = await session.execute(select(Customer).filter(Customer.id == current_user.id))
-        customer = result.scalar_one_or_none()
-
-        if not customer:
-            raise HTTPException(status_code=404, detail="Пользователь не найден")
-
-        customer.location = f"{latitude}, {longitude}"
-
-        await session.commit()
-        return {"customer_id": current_user.id, "location": customer.location}
-
-    except (IndexError, KeyError):
-        raise HTTPException(status_code=404, detail="Не удалось найти координаты для указанного адреса")
+    latitude, longitude = await get_coordinates_from_address(address)
+    updated_location = await update_customer_location_service(current_user, latitude, longitude, session)
+    return {"customer_id": current_user.id, "location": updated_location}

@@ -12,10 +12,18 @@ class OrderCreate(BaseModel):
     dish_ids: List[int]
     total_price: float
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class OrderUpdate(BaseModel):
     status: Optional[str] = None
     total_price: Optional[float] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 
 class OrderRead(OrderCreate):
@@ -26,6 +34,7 @@ class OrderRead(OrderCreate):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class DetailedOrderSchema(BaseModel):
@@ -37,6 +46,7 @@ class DetailedOrderSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class OrderDishSchema(BaseModel):

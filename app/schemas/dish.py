@@ -8,6 +8,10 @@ class DishCreate(BaseModel):
     price: float
     restaurant_id: int
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class DishUpdate(BaseModel):
     name: Optional[str] = None
@@ -15,12 +19,17 @@ class DishUpdate(BaseModel):
     price: Optional[float] = None
     restaurant_id: Optional[int] = None
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class DishRead(DishCreate):
     id: int
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class AddDishSchema(BaseModel):
@@ -33,3 +42,4 @@ class AddDishSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True

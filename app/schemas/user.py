@@ -9,15 +9,27 @@ class UserRead(schemas.BaseUser[int]):
     username: str
     role_id: int
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class UserCreate(schemas.BaseUserCreate):
     username: str
     role_id: int
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class UserUpdate(schemas.BaseUserUpdate):
     email: Optional[str] = None
     password: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 
 class CourierSchema(BaseModel):
@@ -30,6 +42,7 @@ class CourierSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class CustomerSchema(BaseModel):
@@ -40,6 +53,7 @@ class CustomerSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class RoleSchema(BaseModel):
@@ -49,6 +63,7 @@ class RoleSchema(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class BaseUser(BaseModel):
@@ -58,6 +73,7 @@ class BaseUser(BaseModel):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class FullUserSchema(BaseUser):
@@ -65,6 +81,7 @@ class FullUserSchema(BaseUser):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class AdminSchema(BaseModel):

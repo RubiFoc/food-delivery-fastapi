@@ -9,6 +9,10 @@ class RestaurantCreate(BaseModel):
     contact_number: Optional[str] = None
     description: Optional[str] = None
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class RestaurantUpdate(BaseModel):
     name: Optional[str] = None
@@ -16,9 +20,14 @@ class RestaurantUpdate(BaseModel):
     contact_number: Optional[str] = None
     description: Optional[str] = None
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class RestaurantRead(RestaurantCreate):
     id: int
 
     class Config:
         orm_mode = True
+        from_attributes = True

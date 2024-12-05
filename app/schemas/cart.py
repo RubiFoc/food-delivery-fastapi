@@ -9,9 +9,17 @@ class CartCreate(BaseModel):
     dish_id: int
     quantity: int
 
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class CartUpdate(BaseModel):
     quantity: Optional[int] = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 
 class CartRead(CartCreate):
@@ -21,8 +29,13 @@ class CartRead(CartCreate):
 
     class Config:
         orm_mode = True
+        from_attributes = True
 
 
 class CartDishAddRequest(BaseModel):
     dish_id: int = Field(..., description="ID of the dish")
     quantity: int = Field(..., ge=1, description="Quantity of the dish, must be a positive integer")
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

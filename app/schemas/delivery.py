@@ -24,9 +24,6 @@ class DishCategorySchema(BaseModel):
         from_attributes = True
 
 
-from pydantic import BaseModel
-
-
 class DishSchema(BaseModel):
     id: int
     name: str
