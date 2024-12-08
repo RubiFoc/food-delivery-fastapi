@@ -3,20 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчеты</title>
+    <title>Report</title>
 </head>
 <body>
-<h1>Отчеты</h1>
+<h1>Top Courier</h1>
+<div>
+    <p>Courier ID: <span th:text="${topCourier?.id ?: 'N/A'}"></span></p>
+    <p>Courier Name: <span th:text="${topCourier?.user?.username ?: 'N/A'}"></span></p>
+    <p>Courier Rating: <span th:text="${topCourier?.rating ?: 'N/A'}"></span></p>
+</div>
 
-<h2>Лучший курьер</h2>
-<p>ID: <span th:text="${topCourier.id}"></span></p>
-<p>Имя: <span th:text="${topCourier.user.username}"></span></p>
-<p>Рейтинг: <span th:text="${topCourier.rating}"></span></p>
-<p>Общее количество заказов: <span th:text="${topCourier.numberOfMarks}"></span></p>
+<h1>Top Kitchen Worker</h1>
+<div>
+    <p>Kitchen Worker ID: <span th:text="${topKitchenWorker?.id ?: 'N/A'}"></span></p>
+    <p>Kitchen Worker Name: <span th:text="${topKitchenWorker?.user?.username ?: 'N/A'}"></span></p>
+    <p>Kitchen Worker Order Count: <span th:text="${topKitchenWorker?.orders?.size() ?: '0'}"></span></p>
+</div>
 
-<h2>Лучший работник кухни</h2>
-<p>ID: <span th:text="${topKitchenWorker.id}"></span></p>
-<p>Имя: <span th:text="${topKitchenWorker.user.username}"></span></p>
-<p>Общее количество заказов: <span th:text="${topKitchenWorker.orders.size()}"></span></p>
+<h1>Courier Payments</h1>
+<table border="1">
+    <thead>
+    <tr>
+        <th>Courier Name</th>
+        <th>Total Payment</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="entry : ${courierPayments}">
+        <td th:text="${entry.key?.user?.username ?: 'N/A'}"></td>
+        <td th:text="${entry.value}"></td>
+    </tr>
+    </tbody>
+</table>
 </body>
 </html>

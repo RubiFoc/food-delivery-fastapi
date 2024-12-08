@@ -6,8 +6,11 @@ import jakarta.persistence.*;
 @Table(name = "admin")
 public class Admin {
     @Id
+    private Long id;
+
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @MapsId
+    @JoinColumn(name = "id")
     private User user;
 
     @ManyToOne

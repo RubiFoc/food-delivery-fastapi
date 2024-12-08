@@ -8,8 +8,11 @@ import java.util.List;
 @Table(name = "customer")
 public class Customer {
     @Id
+    private Long id;
+
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @MapsId
+    @JoinColumn(name = "id")
     private User user;
 
     private Float balance = 0.0f;

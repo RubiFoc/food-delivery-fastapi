@@ -8,23 +8,28 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.Map;
+
 @Controller
 public class ReportController {
 
+    private final ReportService reportService;
+
     @Autowired
-    private ReportService reportService;
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
 
     @GetMapping("/reports")
     public String getReportPage(Model model) {
-        // Получаем данные для отчета
         Courier topCourier = reportService.getTopCourier();
         KitchenWorker topKitchenWorker = reportService.getTopKitchenWorker();
+        Map<Courier, Float> courierPayments = reportService.calculateAllCourierPay();
 
-        // Добавляем данные в модель
-        model.addAttribute("topCourier", topCourier);
-        model.addAttribute("topKitchenWorker", topKitchenWorker);
+        model.addAttribute("topCourier", topCourier != null ? topCourier : new Courier());
+        model.addAttribute("topKitchenWorker", topKitchenWorker != null ? topKitchenWorker : new KitchenWorker());
+        model.addAttribute("courierPayments", courierPayments);
 
-        // Возвращаем имя шаблона для отображения
         return "reports";
     }
 }

@@ -25,6 +25,9 @@ geopy = "^2.4.1"
 fastadmin = {extras = ["fastapi", "sqlalchemy"], version = "^0.2.16"}
 pytest = "^8.3.4"
 coverage = "^7.6.8"
+flask = "^3.1.0"
+flask-admin = "^1.6.1"
+flask-sqlalchemy = "^3.1.1"
 
 
 [tool.poetry.group.dev.dependencies]
