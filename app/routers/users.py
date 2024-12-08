@@ -34,6 +34,11 @@ router.include_router(
 )
 
 
+@router.get('/my_role', tags=['auth'])
+async def my_role(user: BaseUser = Depends(get_current_user)):
+    return JSONResponse(status_code=status.HTTP_200_OK, content={"role": user.role_id})
+
+
 @router.get('/verify_token', tags=['auth'])
 async def verify_token(user: BaseUser = Depends(get_current_user)):
     return JSONResponse(status_code=status.HTTP_200_OK, content="Token is valid")

@@ -15,6 +15,7 @@ services:
       - my_network
     depends_on:
       - db
+
   db:
     image: postgres
     container_name: postgres
@@ -29,6 +30,20 @@ services:
       - ${DB_PORT}:${DOCKER_PORT}
     networks:
       - my_network
+
+#  java_service:
+#    build:
+#      context: ./java_service
+#    container_name: java_service
+#    restart: always
+#    ports:
+#      - "8080:8080"
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
+#    networks:
+#      - my_network
 
 volumes:
   postgres_data:

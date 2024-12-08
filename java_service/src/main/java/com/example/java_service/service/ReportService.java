@@ -8,11 +8,11 @@ import com.example.java_service.repository.KitchenWorkerRepository;
 import com.example.java_service.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 
-
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,39 +29,53 @@ public class ReportService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public Courier getTopCourier() {
-        Pageable pageable = PageRequest.of(0, 1); // Первая страница, один результат
-        List<Courier> couriers = courierRepository.findTopCourier(pageable);
+    private Date calculateStartDate(String period) {
+        Calendar calendar = Calendar.getInstance();
+        switch (period) {
+            case "month":
+                calendar.add(Calendar.MONTH, -1);
+                break;
+            case "half-year":
+                calendar.add(Calendar.MONTH, -6);
+                break;
+            case "year":
+            default:
+                calendar.add(Calendar.YEAR, -1);
+                break;
+        }
+        return calendar.getTime();
+    }
+
+    public Courier getTopCourier(String period) {
+        Date startDate = calculateStartDate(period);
+        Pageable pageable = PageRequest.of(0, 1);
+        List<Courier> couriers = courierRepository.findTopCourierByPeriod(pageable, startDate, new Date());
         return couriers.isEmpty() ? null : couriers.get(0);
     }
 
-
-    public KitchenWorker getTopKitchenWorker() {
-        Pageable pageable = PageRequest.of(0, 1); // Первая страница, один результат
-        List<KitchenWorker> workers = kitchenWorkerRepository.findTopKitchenWorker(pageable);
+    public KitchenWorker getTopKitchenWorker(String period) {
+        Date startDate = calculateStartDate(period);
+        Pageable pageable = PageRequest.of(0, 1);
+        List<KitchenWorker> workers = kitchenWorkerRepository.findTopKitchenWorkerByPeriod(pageable, startDate, new Date());
         return workers.isEmpty() ? null : workers.get(0);
     }
 
-
-    public float calculateCourierPay(Courier courier) {
-        if (courier == null) return 0;
-
-        List<Order> orders = orderRepository.findByCourier(courier);
-        float totalPay = 0;
-        for (Order order : orders) {
-            totalPay += order.getPrice() * courier.getRate(); // Pay per order
-        }
-        return totalPay;
-    }
-
-    // Новый метод для расчёта выплат всем курьерам
-    public Map<Courier, Float> calculateAllCourierPay() {
+    public Map<Courier, Float> calculateAllCourierPay(String period) {
+        Date startDate = calculateStartDate(period);
         List<Courier> couriers = courierRepository.findAll();
         return couriers.stream()
                 .collect(Collectors.toMap(
                         courier -> courier,
-                        this::calculateCourierPay
+                        courier -> calculateCourierPay(courier, startDate)
                 ));
     }
 
+    private float calculateCourierPay(Courier courier, Date startDate) {
+        List<Order> orders = orderRepository.findByCourierAndTimeOfCreationAfter(courier, startDate);
+        float totalPay = 0;
+        for (Order order : orders) {
+            totalPay += order.getPrice() * courier.getRate();
+        }
+        return totalPay;
+    }
 }

@@ -7,6 +7,7 @@ import './styles/MainPage.css';
 
 function MainPage() {
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [role, setRole] = useState(localStorage.getItem('role')); // Храним роль
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [error, setError] = useState('');
     const [dishes, setDishes] = useState([]);
@@ -25,6 +26,7 @@ function MainPage() {
                 return;
             }
             try {
+                // Проверка аутентификации
                 const response = await fetch('http://127.0.0.1:8000/auth/me', {
                     method: 'GET',
                     headers: {
@@ -34,11 +36,22 @@ function MainPage() {
 
                 if (response.ok) {
                     const userData = await response.json();
-                    setCustomerId(userData.id);
                     setIsAuthenticated(true);
-                    fetchCategories();
-                    fetchDishes();
-                    fetchBalance();
+
+                    // Получаем роль пользователя
+                    const roleResponse = await fetch('http://127.0.0.1:8000/auth/my_role', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+
+                    if (roleResponse.ok) {
+                        const roleData = await roleResponse.json();
+                        setRole(roleData.role); // Сохраняем роль
+                        localStorage.setItem('role', roleData.role); // Сохраняем роль в localStorage
+                    }
+                    fetchBalance()
                 } else {
                     setIsAuthenticated(false);
                 }
@@ -47,11 +60,13 @@ function MainPage() {
                 setIsAuthenticated(false);
             }
         };
+
         checkAuth();
     }, [token]);
 
     useEffect(() => {
         fetchDishes();
+        fetchCategories();
     }, [selectedCategory]);
 
     const fetchCategories = async () => {
@@ -175,6 +190,7 @@ function MainPage() {
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
                 handleLogout={handleLogout}
+                role_id={role}
             />
 
             <main className="main-content">
@@ -218,11 +234,22 @@ function MainPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Войдите, чтобы продолжить</h2>
-                        <Link to="/login">
-                            <Button className="bg-blue-500 text-white">Перейти к входу</Button>
-                        </Link>
+                    <div className="auth-container">
+                        <div className="auth-card">
+                            <h1 className="auth-title">Добро пожаловать!</h1>
+                            <p>Выберите действие, чтобы начать работу с нашей системой.</p>
+                            <div className="auth-buttons">
+                                <Link to="/login">
+                                    <button>Вход</button>
+                                </Link>
+                                <Link to="/register">
+                                    <button className="secondary">Регистрация</button>
+                                </Link>
+                                <Link to="/register/courier_or_worker">
+                                    <button>Регистрация курьера/работника кухни</button>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 )}
             </main>

@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.Map;
 
+import org.springframework.web.bind.annotation.RequestParam;
+
 @Controller
 public class ReportController {
 
@@ -21,10 +23,10 @@ public class ReportController {
     }
 
     @GetMapping("/reports")
-    public String getReportPage(Model model) {
-        Courier topCourier = reportService.getTopCourier();
-        KitchenWorker topKitchenWorker = reportService.getTopKitchenWorker();
-        Map<Courier, Float> courierPayments = reportService.calculateAllCourierPay();
+    public String getReportPage(@RequestParam(name = "period", required = false, defaultValue = "year") String period, Model model) {
+        Courier topCourier = reportService.getTopCourier(period);
+        KitchenWorker topKitchenWorker = reportService.getTopKitchenWorker(period);
+        Map<Courier, Float> courierPayments = reportService.calculateAllCourierPay(period);
 
         model.addAttribute("topCourier", topCourier != null ? topCourier : new Courier());
         model.addAttribute("topKitchenWorker", topKitchenWorker != null ? topKitchenWorker : new KitchenWorker());

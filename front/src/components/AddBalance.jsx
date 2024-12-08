@@ -13,6 +13,7 @@ function AddBalance() {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [balance, setBalance] = useState(0);
+    const [role, setRole] = useState(localStorage.getItem('role')); // Храним роль
 
 
     useEffect(() => {
@@ -136,6 +137,7 @@ function AddBalance() {
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
                 handleLogout={handleLogout}
+                role_id={role}
             />
 
             <main className="main-content">

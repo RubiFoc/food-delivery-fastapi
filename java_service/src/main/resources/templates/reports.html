@@ -1,39 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report</title>
+    <title>Отчет</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f3f4f6;
+            padding-top: 3rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        form {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            margin-right: 1rem;
+            background-color: #fff;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #16a34a;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section p {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .table-container {
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #d1d5db;
+            color: #333;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .highlight-red {
+            color: #dc2626;
+        }
+
+        .home-button {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 2rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .home-button:hover {
+            background-color: #1e40af;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-<h1>Top Courier</h1>
-<div>
-    <p>Courier ID: <span th:text="${topCourier?.id ?: 'N/A'}"></span></p>
-    <p>Courier Name: <span th:text="${topCourier?.user?.username ?: 'N/A'}"></span></p>
-    <p>Courier Rating: <span th:text="${topCourier?.rating ?: 'N/A'}"></span></p>
+
+<div class="container">
+
+    <h1>Выбор периода</h1>
+    <form action="/reports" method="get">
+        <label for="period">Период отчета:</label>
+        <select name="period" id="period">
+            <option value="month">Месяц</option>
+            <option value="half-year">Полгода</option>
+            <option value="year">Год</option>
+        </select>
+        <button type="submit">Показать</button>
+    </form>
+
+    <div class="section">
+        <h1>Лучший курьер</h1>
+        <p>ID курьера: <span th:text="${topCourier?.id ?: 'N/A'}"></span></p>
+        <p>Имя курьера: <span th:text="${topCourier?.user?.username ?: 'N/A'}"></span></p>
+        <p>Рейтинг курьера: <span th:text="${topCourier?.rating ?: 'N/A'}"></span></p>
+    </div>
+
+    <div class="section">
+        <h1>Лучший работник кухни</h1>
+        <p>ID работника: <span th:text="${topKitchenWorker?.id ?: 'N/A'}"></span></p>
+        <p>Имя работника: <span th:text="${topKitchenWorker?.user?.username ?: 'N/A'}"></span></p>
+        <p>Количество заказов: <span th:text="${topKitchenWorker?.orders?.size() ?: '0'}"></span></p>
+    </div>
+
+    <div class="section table-container">
+        <h1>Выплаты курьерам</h1>
+        <table>
+            <thead>
+            <tr>
+                <th>Имя курьера</th>
+                <th>Общая выплата</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${courierPayments}">
+                <td th:text="${entry.key?.user?.username ?: 'N/A'}"></td>
+                <td class="highlight" th:text="${entry.value}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Кнопка "Домой" -->
+    <button class="home-button" onclick="window.location.href='http://localhost:5174/'">Домой</button>
+
 </div>
 
-<h1>Top Kitchen Worker</h1>
-<div>
-    <p>Kitchen Worker ID: <span th:text="${topKitchenWorker?.id ?: 'N/A'}"></span></p>
-    <p>Kitchen Worker Name: <span th:text="${topKitchenWorker?.user?.username ?: 'N/A'}"></span></p>
-    <p>Kitchen Worker Order Count: <span th:text="${topKitchenWorker?.orders?.size() ?: '0'}"></span></p>
-</div>
-
-<h1>Courier Payments</h1>
-<table border="1">
-    <thead>
-    <tr>
-        <th>Courier Name</th>
-        <th>Total Payment</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="entry : ${courierPayments}">
-        <td th:text="${entry.key?.user?.username ?: 'N/A'}"></td>
-        <td th:text="${entry.value}"></td>
-    </tr>
-    </tbody>
-</table>
 </body>
 </html>
