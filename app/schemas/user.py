@@ -91,3 +91,23 @@ class AdminSchema(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class CustomerUpdate(BaseModel):
+    balance: Optional[float]
+    location: Optional[str]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class CourierUpdate(BaseModel):
+    rating: Optional[float]
+    rate: Optional[float]
+    location: Optional[str]
+    number_of_marks: Optional[int]  # Добавляем возможность обновить количество оценок
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

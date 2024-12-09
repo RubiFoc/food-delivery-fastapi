@@ -43,7 +43,7 @@ const CourierPage = () => {
                 const data = await response.json();
                 setOrders(data);
             } else {
-                throw new Error(`Ошибка ${response.status}: Не удалось получить заказы`);
+                throw new Error(`Ошибка ${response.status}: Не удалось получить заказы 1`);
             }
         } catch (err) {
             setError(err.message);
@@ -66,7 +66,7 @@ const CourierPage = () => {
                 const data = await response.json();
                 setAssignedOrders(data);
             } else {
-                throw new Error(`Ошибка ${response.status}: Не удалось получить назначенные заказы`);
+                const data = {}
             }
         } catch (err) {
             setError(err.message);
@@ -160,57 +160,64 @@ const CourierPage = () => {
     if (error) return <div className="courier-error-message">Ошибка: {error}</div>;
 
     return (
-        <div className="courier-page">
-            {/* Добавляем Header */}
-            <Header
-                isAuthenticated={isAuthenticated}
-                handleLogout={() => {
-                    localStorage.removeItem('token');
-                    setIsAuthenticated(false);
-                    setToken('');
-                }}
-                role_id={roleId} // Роль курьера
-            />
-            <div className="courier-header">
-                <h1>Заказы Курьера</h1>
-                <div className="courier-location">
-                    <label htmlFor="courierLocation">Местоположение курьера: </label>
-                    <input
-                        type="text"
-                        id="courierLocation"
-                        value={courierLocation}
-                        onChange={(e) => setCourierLocation(e.target.value)}
-                        placeholder="Введите ваше местоположение"
-                    />
-                </div>
-            </div>
+    <div className="courier-page">
+        {/* Header */}
+        <Header
+            isAuthenticated={isAuthenticated}
+            handleLogout={() => {
+                localStorage.removeItem('token');
+                setIsAuthenticated(false);
+                setToken('');
+            }}
+            role_id={roleId} // Роль курьера
+        />
 
-            <div className="orders-container">
-                {/* Доступные заказы */}
-                <div className="orders-section">
-                    <h2>Доступные заказы</h2>
+        <div className="courier-header">
+            <h1>Заказы Курьера</h1>
+            <div className="courier-location">
+                <label htmlFor="courierLocation">Местоположение курьера: </label>
+                <input
+                    type="text"
+                    id="courierLocation"
+                    value={courierLocation}
+                    onChange={(e) => setCourierLocation(e.target.value)}
+                    placeholder="Введите ваше местоположение"
+                />
+            </div>
+        </div>
+
+        <div className="orders-container">
+            {/* Доступные заказы */}
+            <div className="orders-section">
+                <h2>Доступные заказы</h2>
+                {orders.length > 0 ? (
                     <div className="orders-grid">
                         {orders.map((order) => (
-                            order.is_prepared &&
-                            <div key={order.order_id} className="order-card">
-                                <p><strong>Номер заказа:</strong> {order.order_id}</p>
-                                <p><strong>Готовность:</strong> {order.is_prepared ? 'Да' : 'Нет'}</p>
-                                <Button className="action-btn" onClick={() => handleTakeOrder(order.order_id)}>
-                                    Принять заказ
-                                </Button>
-                                <Button className="action-btn" onClick={() => fetchOrderInfo(order.order_id)}>
-                                    Просмотр деталей
-                                </Button>
-                            </div>
+                            order.is_prepared && (
+                                <div key={order.order_id} className="order-card">
+                                    <p><strong>Номер заказа:</strong> {order.order_id}</p>
+                                    <p><strong>Готовность:</strong> {order.is_prepared ? 'Да' : 'Нет'}</p>
+                                    <Button className="action-btn" onClick={() => handleTakeOrder(order.order_id)}>
+                                        Принять заказ
+                                    </Button>
+                                    <Button className="action-btn" onClick={() => fetchOrderInfo(order.order_id)}>
+                                        Просмотр деталей
+                                    </Button>
+                                </div>
+                            )
                         ))}
                     </div>
-                </div>
+                ) : (
+                    <p className="no-orders-message">Нет доступных заказов для принятия.</p>
+                )}
+            </div>
 
-                <hr className="orders-separator"/>
+            <hr className="orders-separator" />
 
-                {/* Назначенные заказы */}
-                <div className="orders-section">
-                    <h2>Назначенные заказы</h2>
+            {/* Назначенные заказы */}
+            <div className="orders-section">
+                <h2>Назначенные заказы</h2>
+                {assignedOrders.length > 0 ? (
                     <div className="orders-grid">
                         {assignedOrders
                             .sort((a, b) => a.is_delivered - b.is_delivered) // Сортировка по полю is_delivered
@@ -223,7 +230,7 @@ const CourierPage = () => {
                                     {/* Отображаем кнопку "Отметить как доставленный" только для недоставленных заказов */}
                                     {!order.is_delivered && (
                                         <Button className="action-btn"
-                                                onClick={() => handleDeliverOrder(order.order_id)}>
+                                            onClick={() => handleDeliverOrder(order.order_id)}>
                                             Отметить как доставленный
                                         </Button>
                                     )}
@@ -234,32 +241,35 @@ const CourierPage = () => {
                                 </div>
                             ))}
                     </div>
-                </div>
-
+                ) : (
+                    <p className="no-orders-message">У вас пока нет назначенных заказов.</p>
+                )}
             </div>
-
-            <Modal
-                title="Детали заказа"
-                visible={isModalVisible}
-                onCancel={closeModal}
-                footer={null}
-                className="order-modal"
-            >
-                <div className="modal-content">
-                    {orderInfo ? (
-                        <>
-                            <p><strong>Стоимость:</strong> {orderInfo.cost}</p>
-                            <p><strong>Дата создания:</strong> {orderInfo.creation_date}</p>
-                            <p><strong>Вес:</strong> {orderInfo.weight}</p>
-                            <p><strong>Местоположение:</strong> {orderInfo.location}</p>
-                        </>
-                    ) : (
-                        <p>Загружаем детали заказа...</p>
-                    )}
-                </div>
-            </Modal>
         </div>
-    );
+
+        <Modal
+            title="Детали заказа"
+            visible={isModalVisible}
+            onCancel={closeModal}
+            footer={null}
+            className="order-modal"
+        >
+            <div className="modal-content">
+                {orderInfo ? (
+                    <>
+                        <p><strong>Стоимость:</strong> {orderInfo.cost}</p>
+                        <p><strong>Дата создания:</strong> {orderInfo.creation_date}</p>
+                        <p><strong>Вес:</strong> {orderInfo.weight}</p>
+                        <p><strong>Местоположение:</strong> {orderInfo.location}</p>
+                    </>
+                ) : (
+                    <p>Загружаем детали заказа...</p>
+                )}
+            </div>
+        </Modal>
+    </div>
+);
+
 }
 
 export default CourierPage;

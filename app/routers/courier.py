@@ -32,7 +32,7 @@ async def get_not_delivered_orders(
     orders = result.scalars().all()
 
     if not orders:
-        raise HTTPException(status_code=404, detail="No orders found that are not delivered")
+        return []
 
     order_status_list = [
         OrderStatusSchema(

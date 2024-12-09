@@ -7,17 +7,14 @@ from sqlalchemy.orm import joinedload
 from starlette.requests import Request
 from auth.database import get_async_session
 from dependencies import get_current_superuser
-from models.delivery import User, Role, Restaurant, Dish, Order, Cart, DishCategory
-from schemas.cart import CartCreate, CartUpdate
+from models.delivery import User, Dish, DishCategory, OrderStatus, Customer, Courier
 from schemas.delivery import DishSchema, DishCategorySchema
-from schemas.dish import DishUpdate, DishCreate
-from schemas.order import OrderCreate, OrderUpdate
-from schemas.user import UserCreate, UserRead, UserUpdate
-from schemas.restaurant import RestaurantCreate, RestaurantUpdate
+from schemas.order import OrderStatusUpdate
+from schemas.user import UserCreate, UserRead, UserUpdate, CustomerUpdate, CourierUpdate
 from auth.auth import auth_backend
 from auth.manager import get_admin_manager, AdminManager
 
-admin_router = APIRouter(prefix="/admin", tags=["admin"])
+admin_router = APIRouter(prefix="/admins", tags=["admin"])
 
 fastapi_users_admin = FastAPIUsers(
     get_admin_manager,
@@ -103,62 +100,6 @@ async def delete_user(
     await session.commit()
 
     return {"message": "Пользователь успешно удален"}
-
-
-@admin_router.get("/restaurants")
-async def get_restaurants(
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Restaurant))
-    restaurants = result.scalars().all()
-    return restaurants
-
-
-@admin_router.post("/restaurant")
-async def create_restaurant(
-        restaurant_create: RestaurantCreate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    restaurant = Restaurant(**restaurant_create.dict())
-    session.add(restaurant)
-    await session.commit()
-    return {"message": "Restaurant created successfully."}
-
-
-@admin_router.put("/restaurant/{restaurant_id}")
-async def update_restaurant(
-        restaurant_id: int,
-        restaurant_update: RestaurantUpdate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Restaurant).filter(Restaurant.id == restaurant_id))
-    restaurant = result.scalars().first()
-    if not restaurant:
-        raise HTTPException(status_code=404, detail="Restaurant not found.")
-
-    for field, value in restaurant_update.dict(exclude_unset=True).items():
-        setattr(restaurant, field, value)
-
-    await session.commit()
-    return {"message": f"Restaurant {restaurant.name} updated successfully."}
-
-
-@admin_router.delete("/restaurant/{restaurant_id}")
-async def delete_restaurant(
-        restaurant_id: int,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Restaurant).filter(Restaurant.id == restaurant_id))
-    restaurant = result.scalars().first()
-    if not restaurant:
-        raise HTTPException(status_code=404, detail="Restaurant not found.")
-    await session.delete(restaurant)
-    await session.commit()
-    return {"message": f"Restaurant {restaurant.name} deleted successfully."}
 
 
 @admin_router.get("/dishes")
@@ -272,26 +213,6 @@ async def update_dish(
     return dish
 
 
-
-@admin_router.put("/dish/{dish_id}")
-async def update_dish(
-        dish_id: int,
-        dish_update: DishUpdate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Dish).filter(Dish.id == dish_id))
-    dish = result.scalars().first()
-    if not dish:
-        raise HTTPException(status_code=404, detail="Dish not found.")
-
-    for field, value in dish_update.dict(exclude_unset=True).items():
-        setattr(dish, field, value)
-
-    await session.commit()
-    return {"message": f"Dish {dish.name} updated successfully."}
-
-
 @admin_router.delete("/dishes")
 async def delete_dish(
         id: int,
@@ -313,118 +234,6 @@ async def delete_dish(
         await session.rollback()
         raise HTTPException(status_code=500, detail="Error deleting dish")
     return {"Dish category was deleted": DishCategorySchema.from_orm(existing_dish)}
-
-
-@admin_router.get("/orders")
-async def get_orders(
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Order).options(joinedload(Order.restaurant), joinedload(Order.user)))
-    orders = result.scalars().all()
-    return orders
-
-
-@admin_router.post("/order")
-async def create_order(
-        order_create: OrderCreate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    order = Order(**order_create.dict())
-    session.add(order)
-    await session.commit()
-    return {"message": "Order created successfully."}
-
-
-@admin_router.put("/order/{order_id}")
-async def update_order(
-        order_id: int,
-        order_update: OrderUpdate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Order).filter(Order.id == order_id))
-    order = result.scalars().first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found.")
-
-    for field, value in order_update.dict(exclude_unset=True).items():
-        setattr(order, field, value)
-
-    await session.commit()
-    return {"message": f"Order {order.id} updated successfully."}
-
-
-@admin_router.delete("/order/{order_id}")
-async def delete_order(
-        order_id: int,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Order).filter(Order.id == order_id))
-    order = result.scalars().first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found.")
-    await session.delete(order)
-    await session.commit()
-    return {"message": f"Order {order.id} deleted successfully."}
-
-
-@admin_router.get("/carts")
-async def get_carts(
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Cart).options(joinedload(Cart.dish), joinedload(Cart.user)))
-    carts = result.scalars().all()
-    return carts
-
-
-@admin_router.post("/cart")
-async def create_cart(
-        cart_create: CartCreate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    cart_item = Cart(**cart_create.dict())
-    session.add(cart_item)
-    await session.commit()
-    return {"message": "Cart item created successfully."}
-
-
-@admin_router.put("/cart/{cart_id}")
-async def update_cart(
-        cart_id: int,
-        cart_update: CartUpdate,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Cart).filter(Cart.id == cart_id))
-    cart_item = result.scalars().first()
-    if not cart_item:
-        raise HTTPException(status_code=404, detail="Cart item not found.")
-
-    for field, value in cart_update.dict(exclude_unset=True).items():
-        setattr(cart_item, field, value)
-
-    await session.commit()
-    return {"message": f"Cart item {cart_item.id} updated successfully."}
-
-
-@admin_router.delete("/cart/{cart_id}")
-async def delete_cart(
-        cart_id: int,
-        session: AsyncSession = Depends(get_async_session),
-        current_user: User = Depends(get_current_superuser)
-):
-    result = await session.execute(select(Cart).filter(Cart.id == cart_id))
-    cart_item = result.scalars().first()
-    if not cart_item:
-        raise HTTPException(status_code=404, detail="Cart item not found.")
-    await session.delete(cart_item)
-    await session.commit()
-    return {"message": f"Cart item {cart_item.id} deleted successfully."}
 
 
 @admin_router.delete("/dish-categories")
@@ -508,3 +317,170 @@ async def update_dish_category_by_name(
         raise HTTPException(status_code=500, detail="Error patching dish category")
 
     return DishCategorySchema.from_orm(category)
+
+
+@admin_router.get("/order_statuses")
+async def get_order_statuses(
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    result = await session.execute(select(OrderStatus).options(joinedload(OrderStatus.order)))
+    order_statuses = result.scalars().all()
+    return order_statuses
+
+
+# Изменение статуса заказа
+@admin_router.put("/order_status/{order_id}")
+async def update_order_status(
+        order_id: int,
+        order_status_update: OrderStatusUpdate,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    result = await session.execute(select(OrderStatus).filter(OrderStatus.order_id == order_id))
+    order_status = result.scalars().first()
+    if not order_status:
+        raise HTTPException(status_code=404, detail="Order status not found.")
+
+    for field, value in order_status_update.dict(exclude_unset=True).items():
+        setattr(order_status, field, value)
+
+    await session.commit()
+    return {"message": f"Order status for order {order_id} updated successfully."}
+
+
+# Удаление статуса заказа
+@admin_router.delete("/order_status/{order_id}")
+async def delete_order_status(
+        order_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    order_status_to_delete = await session.get(OrderStatus, order_id)
+    if not order_status_to_delete:
+        raise HTTPException(status_code=404, detail="Order status not found")
+
+    await session.delete(order_status_to_delete)
+    await session.commit()
+
+    return {"message": "Order status successfully deleted"}
+
+
+@admin_router.get("/customers")
+async def get_customers(
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Получить всех пользователей с ролью Customer.
+    """
+    result = await session.execute(
+        select(Customer).options(joinedload(Customer.user), joinedload(Customer.role))
+    )
+    customers = result.scalars().all()
+    return customers
+
+
+@admin_router.get("/customer/{customer_id}")
+async def get_customer(
+        customer_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Получить информацию о конкретном Customer по ID.
+    """
+    result = await session.execute(
+        select(Customer).filter(Customer.id == customer_id)
+        .options(joinedload(Customer.user), joinedload(Customer.role))
+    )
+    customer = result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found.")
+    return customer
+
+
+@admin_router.put("/customer/{customer_id}")
+async def update_customer(
+        customer_id: int,
+        customer_update: CustomerUpdate,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Обновить данные о Customer по ID.
+    """
+    result = await session.execute(select(Customer).filter(Customer.id == customer_id))
+    customer = result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found.")
+
+    # Обновляем поля из CustomerUpdate
+    update_data = customer_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(customer, field, value)
+
+    await session.commit()
+    return {"message": f"Customer {customer_id} updated successfully."}
+
+@admin_router.get("/couriers")
+async def get_couriers(
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Получить всех пользователей с ролью Courier.
+    """
+    result = await session.execute(
+        select(Courier).options(joinedload(Courier.user), joinedload(Courier.role))
+    )
+    couriers = result.scalars().all()
+    return couriers
+
+
+@admin_router.get("/courier/{courier_id}")
+async def get_courier(
+        courier_id: int,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Получить информацию о конкретном Courier по ID.
+    """
+    result = await session.execute(
+        select(Courier).filter(Courier.id == courier_id)
+        .options(joinedload(Courier.user), joinedload(Courier.role))
+    )
+    courier = result.scalars().first()
+    if not courier:
+        raise HTTPException(status_code=404, detail="Courier not found.")
+    return courier
+
+
+@admin_router.put("/courier/{courier_id}")
+async def update_courier(
+        courier_id: int,
+        courier_update: CourierUpdate,
+        session: AsyncSession = Depends(get_async_session),
+        current_user: User = Depends(get_current_superuser)
+):
+    """
+    Обновить данные о Courier по ID, включая количество оценок.
+    """
+    result = await session.execute(select(Courier).filter(Courier.id == courier_id))
+    courier = result.scalars().first()
+    if not courier:
+        raise HTTPException(status_code=404, detail="Courier not found.")
+
+    # Обновляем поля из CourierUpdate
+    update_data = courier_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        if hasattr(courier, field):
+            setattr(courier, field, value)
+
+    # Если передано количество оценок, обновляем его
+    if courier_update.number_of_marks is not None:
+        courier.number_of_marks = courier_update.number_of_marks
+
+    await session.commit()
+    return {"message": f"Courier {courier_id} updated successfully."}

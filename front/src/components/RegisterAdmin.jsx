@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
-import Cookies from 'js-cookie'; // Import js-cookie
+import Header from './Header'; // Импортируем компонент Header
+import './styles/RegisterAdmin.css'; // Подключение CSS-файла
 
 function RegisterAdmin() {
     const [email, setEmail] = useState('');
@@ -9,14 +10,13 @@ function RegisterAdmin() {
     const [success, setSuccess] = useState('');
     const [token, setToken] = useState('');
 
-
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         if (storedToken) {
             setToken(storedToken);
-            handleRegister(storedToken)
+            handleRegister(storedToken);
         } else {
-            setError('Token not found');
+            setError('Токен не найден');
         }
     }, []);
 
@@ -26,17 +26,16 @@ function RegisterAdmin() {
         setSuccess('');
 
         if (password !== confirmPassword) {
-            setError("Passwords don't match");
+            setError("Пароли не совпадают");
             return;
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/admin/register', {
+            const response = await fetch('http://127.0.0.1:8000/admins/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
-
                 },
                 body: JSON.stringify({
                     email: email,
@@ -51,60 +50,56 @@ function RegisterAdmin() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || 'Registration failed');
+                throw new Error(errorData.detail || 'Ошибка регистрации');
             }
 
-            setSuccess('Admin registered successfully!');
+            setSuccess('Администратор успешно зарегистрирован!');
             setEmail('');
             setPassword('');
             setConfirmPassword('');
         } catch (error) {
-            setError(error.message || 'Registration failed, please try again');
+            setError(error.message || 'Ошибка регистрации, пожалуйста, попробуйте снова');
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
-                <h2 className="text-2xl font-bold text-center mb-6">Register Admin</h2>
+        <div className="auth-container">
+            <Header
+                isAuthenticated={true}
+                role_id={4}
+                handleLogout={() => console.log("Выход из системы")}
+            />
+
+            <div className="auth-card">
+                <h2 className="auth-title">Регистрация администратора</h2>
                 {error && <p className="text-red-500 text-center mb-4">{error}</p>}
                 {success && <p className="text-green-500 text-center mb-4">{success}</p>}
-                <form onSubmit={handleRegister}>
-                    <div className="mb-4">
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="password" className="block text-sm font-semibold text-gray-700">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700">Confirm
-                            Password</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            className="w-full p-2 border border-gray-300 rounded-md"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md">Register</button>
+                <form className="auth-form" onSubmit={handleRegister}>
+                    <label htmlFor="email">Email</label>
+                    <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                    <label htmlFor="password">Пароль</label>
+                    <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                    <label htmlFor="confirmPassword">Подтвердите пароль</label>
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                    />
+                    <button type="submit">Зарегистрировать</button>
                 </form>
             </div>
         </div>

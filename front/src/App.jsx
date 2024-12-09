@@ -12,6 +12,7 @@ import OrderPage from "./components/OrderPage.jsx";
 import AddBalance from "./components/AddBalance.jsx";
 import './index.css'
 import UpdateLocation from "./components/UpdateLocation.jsx";
+import AdminPanel from "./components/AdminPanel.jsx";
 
 const App = () => {
     const [dishes, setDishes] = useState([]);
@@ -32,6 +33,7 @@ const App = () => {
                     <Route path="/add_balance" element={<AddBalance/>}/>
                     <Route path="/courier/take_order" element={<CourierPage/>}/>
                     <Route path="/customer/location" element={<UpdateLocation/>}/>
+                    <Route path="/admin" element={<AdminPanel/>}/>
 
                 </Routes>
             </Router>

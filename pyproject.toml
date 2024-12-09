@@ -28,6 +28,7 @@ coverage = "^7.6.8"
 flask = "^3.1.0"
 flask-admin = "^1.6.1"
 flask-sqlalchemy = "^3.1.1"
+sqladmin = "^0.20.1"
 
 
 [tool.poetry.group.dev.dependencies]

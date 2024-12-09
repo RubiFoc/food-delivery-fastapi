@@ -78,3 +78,8 @@ class OrderInfoSchema(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class OrderStatusUpdate(BaseModel):
+    is_prepared: bool = None
+    is_delivered: bool = None
